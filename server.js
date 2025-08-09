@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const llmRouter = require('./routers/llm');
 
 const allowedOrigins = [
   "http://localhost:3000",
@@ -23,6 +24,8 @@ app.use(
     optionsSuccessStatus: 204,
   })
 );
+
+app.use('/model', llmRouter);
 
 const PORT = process.env.PORT || 1989;
 
