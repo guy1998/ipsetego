@@ -1,0 +1,310 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+/* Custom animations and effects */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.3); }
+  50% { box-shadow: 0 0 40px hsl(var(--primary) / 0.6); }
+}
+
+@keyframes slide-in-stagger {
+  0% { 
+    opacity: 0; 
+    transform: translateY(30px) scale(0.95); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+@keyframes parallax-drift {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-5px) rotate(1deg); }
+}
+
+@keyframes card-hover {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-8px) scale(1.02); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 263 70% 50%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 263 70% 50%;
+
+    /* Portfolio specific design tokens */
+    --chat-bg: 240 10% 3.9%;
+    --message-bg: 240 3.7% 15.9%;
+    --user-message: 263 70% 50%;
+    --assistant-message: 240 3.7% 15.9%;
+    --gradient-primary: linear-gradient(135deg, hsl(263 70% 50%), hsl(280 70% 60%));
+    --gradient-secondary: linear-gradient(135deg, hsl(240 3.7% 15.9%), hsl(240 10% 3.9%));
+    --gradient-shimmer: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.1), transparent);
+    --glow: 0 0 40px hsl(263 70% 50% / 0.3);
+    --glow-intense: 0 0 60px hsl(263 70% 50% / 0.5);
+    --shadow-elevated: 0 20px 60px -10px hsl(var(--primary) / 0.2);
+    --shadow-floating: 0 10px 30px -5px hsl(0 0% 0% / 0.3);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --blur-glass: blur(16px);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 263 70% 60%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    
+    /* Dark mode chat colors */
+    --chat-bg: 222.2 84% 4.9%;
+    --message-bg: 217.2 32.6% 17.5%;
+    --user-message: 263 70% 60%;
+    --assistant-message: 217.2 32.6% 17.5%;
+  }
+
+  /* Light mode overrides */
+  :root:not(.dark) {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 263 70% 50%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 263 70% 50%;
+
+    /* Light mode chat colors */
+    --chat-bg: 0 0% 100%;
+    --message-bg: 210 40% 96.1%;
+    --user-message: 263 70% 50%;
+    --assistant-message: 210 40% 96.1%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Modern card styles */
+  .modern-card {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, hsl(var(--card) / 0.95), hsl(var(--card) / 0.8));
+    backdrop-filter: var(--blur-glass);
+    border: 1px solid hsl(var(--border) / 0.3);
+    box-shadow: var(--shadow-elevated);
+    transition: var(--transition-bounce);
+  }
+
+  .modern-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-floating), var(--glow-intense);
+  }
+
+  .modern-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-shimmer);
+    transition: left 0.5s;
+  }
+
+  .modern-card:hover::before {
+    left: 100%;
+  }
+
+  /* Chat message styles with parallax */
+  .chat-message {
+    @apply relative;
+    animation: slide-in-stagger 0.6s ease-out;
+    transition: var(--transition-smooth);
+  }
+
+  .chat-message:nth-child(odd) {
+    animation-delay: 0.1s;
+  }
+
+  .chat-message:nth-child(even) {
+    animation-delay: 0.2s;
+  }
+
+  .chat-message.user-message {
+    transform-origin: right center;
+  }
+
+  .chat-message.assistant-message {
+    transform-origin: left center;
+  }
+
+  .chat-message.parallax-float {
+    animation: parallax-drift 6s ease-in-out infinite alternate;
+  }
+
+  /* Glass morphism effect */
+  .glass-card {
+    background: linear-gradient(135deg, hsl(var(--card) / 0.1), hsl(var(--card) / 0.05));
+    backdrop-filter: var(--blur-glass);
+    border: 1px solid hsl(var(--border) / 0.2);
+    box-shadow: 0 8px 32px hsl(0 0% 0% / 0.1);
+  }
+
+  /* Enhanced button styles */
+  .btn-glow {
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition-smooth);
+  }
+
+  .btn-glow::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary-foreground) / 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn-glow:hover::before {
+    left: 100%;
+  }
+
+  .btn-glow:hover {
+    box-shadow: var(--glow);
+    transform: translateY(-2px);
+  }
+
+  /* Floating animation */
+  .float-animation {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Stagger animation for lists */
+  .stagger-child {
+    opacity: 0;
+    animation: slide-in-stagger 0.6s ease-out forwards;
+  }
+
+  .stagger-child:nth-child(1) { animation-delay: 0.1s; }
+  .stagger-child:nth-child(2) { animation-delay: 0.2s; }
+  .stagger-child:nth-child(3) { animation-delay: 0.3s; }
+  .stagger-child:nth-child(4) { animation-delay: 0.4s; }
+  .stagger-child:nth-child(5) { animation-delay: 0.5s; }
+  .stagger-child:nth-child(6) { animation-delay: 0.6s; }
+
+  /* Profile enhancement */
+  .profile-glow {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+}
