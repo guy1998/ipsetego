@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const { sequelize } = require('./models/index');
 const llmRouter = require('./routers/llm');
 
 const allowedOrigins = [
@@ -29,6 +30,21 @@ app.use('/model', llmRouter);
 
 const PORT = process.env.PORT || 1989;
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-});
+async function startServer() {
+  try {
+    if (process.env.NODE_ENV === 'development') {
+      await sequelize.sync({ force: true });
+    } else {
+      await sequelize.sync();
+    }
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+
+  } catch (err) {
+    console.error('Unable to connect to DB:', err);
+  }
+}
+
+startServer();
