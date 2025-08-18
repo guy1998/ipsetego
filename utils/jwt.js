@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const cookieManager = require('./cookie-manager');
 
 const tokenIssuing = async (userInfo) => {
     const accessToken = jwt.sign({ ...userInfo }, process.env.JWT_KEY, { expiresIn: 900 }) //15 minutes

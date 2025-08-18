@@ -1,4 +1,5 @@
 const { tokenChecker, tokenRefresher } = require('../utils/jwt');
+const cookieManager = require('../utils/cookies');
 
 const authorize = async (req, res, next) => {
     const tokens = req.cookies.tokenCookie;

@@ -18,8 +18,16 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   User.associate = (models) => {
-    User.hasMany(models.Project, { foreignKey: 'userId' });
-    User.hasMany(models.Experience, { foreignKey: 'userId' });
+    User.hasMany(models.Project, {
+      foreignKey: 'userId',
+      onDelete: 'CASCADE',
+      hooks: true
+    });
+    User.hasMany(models.Experience, {
+      foreignKey: 'userId',
+      onDelete: 'CASCADE',
+      hooks: true
+    });
   };
 
   return User;
