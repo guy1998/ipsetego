@@ -56,4 +56,10 @@ app.post('/create', (req, res, next) => authorize(req, res, next, 'admin'), asyn
     res.status(status).json(data);
 });
 
+//TODO: remove this when hosting online
+app.post('/create-dev', async (req, res) => {
+    const { status, data } = await userModule.createUser(req.body);
+    res.status(status).json(data);
+});
+
 module.exports = app;
