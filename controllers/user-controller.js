@@ -4,15 +4,13 @@ const { internalServerError, dataLessResponse, responseWithData } = require('../
 const { User } = require('../models');
 const { retrieveId } = require('../utils/jwt');
 const { sendOtp } = require('../utils/mailer');
-const { passwordHasher, generateOtp, sanitizeInput, passwordVerifier } = require('../utils/security');
+const { generateOtp, sanitizeInput, passwordVerifier } = require('../utils/security');
 
 const sanitizeData = (data) => {
     const sanitizedData = {};
     for (const key in data) {
         if (key === 'birthday') {
             sanitizedData[key] = data[key];
-        } else if (key === 'password') {
-            sanitizedData[key] = passwordHasher(sanitizeInput(data[key]));
         } else {
             sanitizedData[key] = sanitizeInput(data[key]);
         }
@@ -47,6 +45,7 @@ const createUser = async (userData) => {
         const newUser = await User.create(userData);
         return responseWithData(200, "User created successfully!", newUser);
     } catch (error) {
+        console.log(error);
         return internalServerError()
     }
 };
@@ -77,7 +76,7 @@ const editPassword = async (userId, oldPassword, newPassword) => {
             return dataLessResponse(400, "New password cannot be the same as old password!");
         }
         await User.update(
-            { password: passwordHasher(newPassword) },
+            { password: newPassword },
             { where: { id: userId }, returning: true }
         );
         return responseWithData(200, "User updated successfully!", updatedUsers);

@@ -1,3 +1,5 @@
+const { passwordHasher } = require("../utils/security");
+
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     name: { type: DataTypes.STRING, allowNull: false }, // Create 1st time
@@ -17,6 +19,19 @@ module.exports = (sequelize, DataTypes) => {
     languages: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true }
   });
 
+  User.addHook('beforeCreate', async (user, options) => {
+    if (user.password) {
+      user.password = passwordHasher(user.password);
+    }
+  });
+
+  User.addHook('beforeUpdate', async (user, options) => {
+    if (user.changed('password')) {
+      user.password = passwordHasher(user.password);
+    }
+  });
+
+
   User.associate = (models) => {
     User.hasMany(models.Project, {
       foreignKey: 'userId',
@@ -33,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
   User.addHook('beforeDestroy', async (user, options) => {
     try {
       //TODO: Add logic to delete files
-    } catch(error) {
+    } catch (error) {
       console.log(`Error deleting the files of this user: ${error.message}`);
     }
   });
