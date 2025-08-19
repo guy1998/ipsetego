@@ -1,12 +1,19 @@
 const { tokenChecker, tokenRefresher } = require('../utils/jwt');
 const cookieManager = require('../utils/cookies');
 
-const authorize = async (req, res, next) => {
+const checkRole = (userRole, requiredRole) => {
+    return userRole === requiredRole || !requiredRole;
+};
+
+const authorize = async (req, res, next, role) => {
     const tokens = req.cookies.tokenCookie;
     if (tokens) {
         const checkAccess = tokenChecker(tokens.accessToken);
         if (checkAccess.result) {
-            return next();
+            const roleCheckResult = checkRole(checkAccess.payload.role, role);
+            if (roleCheckResult)
+                return next();
+            res.status(401).json("Access not allowed for this role!");
         } else {
             const refreshAccess = tokenRefresher(tokens.refreshToken);
             if (refreshAccess.result) {
@@ -15,7 +22,10 @@ const authorize = async (req, res, next) => {
                     refreshToken: refreshAccess.content.refreshToken,
                 });
                 req.cookies.tokenCookie.accessToken = refreshAccess.content.accessToken;
-                return next();
+                const roleCheckResult = checkRole(checkAccess.payload.role, role);
+                if (roleCheckResult)
+                    return next();
+                res.status(401).json("Access not allowed for this role!");
             } else {
                 return res.status(401).json(refreshAccess.content);
             }

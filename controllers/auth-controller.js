@@ -2,6 +2,7 @@ const { User } = require('../models');
 const { passwordVerifier } = require('../utils/security');
 const { tokenIssuing } = require('../utils/jwt');
 const cookieManager = require('../utils/cookies');
+const userModule = require('./user-controller');
 
 const login = async (req, res) => {
     try {
@@ -33,7 +34,24 @@ const logout = async (req, res) => {
     }
 };
 
+const register = (req, res) => {
+    const { status, data } = userModule.cacheUserForConfirmation(req.body);
+    res.status(status).json(data);
+};
+
+const confirmRegistration = async (req, res) => {
+    const userData = userModule.retrieveCache(req.body.otp);
+    if(userData) {
+        const { status, data } = userModule.createUser(userData);
+        res.status(status).json(data);
+    } else {
+        res.status(401).json({ message: "This OTP is invalid!" });
+    }
+};
+
 module.exports = {
     login,
-    logout
+    logout,
+    register,
+    confirmRegistration
 }

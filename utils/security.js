@@ -1,5 +1,14 @@
 const bcrypt = require("bcrypt");
 const sanitizeHtml = require('sanitize-html');
+const otpGenerator = require('otp-generator')
+
+const generateOtp = () => {
+  return otpGenerator.generate(6, {
+    upperCaseAlphabets: false,
+    specialChars: false,
+    lowerCaseAlphabets: false
+  });
+}
 
 const passwordHasher = password => {
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -21,5 +30,6 @@ function sanitizeInput(input) {
 module.exports = {
   passwordHasher,
   passwordVerifier,
-  sanitizeInput
+  sanitizeInput,
+  generateOtp
 };

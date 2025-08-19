@@ -3,6 +3,8 @@ const cors = require("cors");
 const app = express();
 const { sequelize } = require('./models/index');
 const llmRouter = require('./routers/llm');
+const authRouter = require('./routers/auth');
+const userRouter = require('./routers/user');
 
 const allowedOrigins = [
   "http://localhost:3000",
@@ -27,6 +29,8 @@ app.use(
 );
 
 app.use('/model', llmRouter);
+app.use('/auth', authRouter);
+app.use('/user', userRouter);
 
 const PORT = process.env.PORT || 1989;
 
