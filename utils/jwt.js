@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-const tokenIssuing = async (userInfo) => {
+const tokenIssuing = (userInfo) => {
     const accessToken = jwt.sign({ ...userInfo }, process.env.JWT_KEY, { expiresIn: 900 }) //15 minutes
     const refreshToken = jwt.sign({ ...userInfo }, process.env.JWT_KEY, { expiresIn: '2h' });
     return { accessToken: accessToken, refreshToken: refreshToken };

@@ -25,13 +25,6 @@ module.exports = (sequelize, DataTypes) => {
     }
   });
 
-  User.addHook('beforeUpdate', async (user, options) => {
-    if (user.changed('password')) {
-      user.password = passwordHasher(user.password);
-    }
-  });
-
-
   User.associate = (models) => {
     User.hasMany(models.Project, {
       foreignKey: 'userId',

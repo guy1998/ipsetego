@@ -12,7 +12,7 @@ app.post('/login', authModule.login);
 
 app.post('/logout', authModule.logout);
 
-app.post('/register', authModule.login);
+app.post('/register', authModule.register);
 
 app.post('/confirm', authModule.confirmRegistration);
 

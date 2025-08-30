@@ -14,7 +14,7 @@ app.get('/list', (req, res, next) => authorize(req, res, next, 'admin'), async (
     res.status(status).json(data);
 });
 
-app.get('/:id', (req, res, next) => authorize(req, res, next, 'admin'), async (req, res) => {
+app.get('/retrieve/:id', (req, res, next) => authorize(req, res, next, 'admin'), async (req, res) => {
     const { status, data } = await userModule.getUser(req.params.id);
     res.status(status).json(data);
 });
@@ -47,7 +47,7 @@ app.put('/update-password/self', authorize, async (req, res) => {
 });
 
 app.delete('/delete/:id', (req, res, next) => authorize(req, res, next, 'admin'), async (req, res) => {
-    const { status, data } = userModule.deleteUser(req.params.id);
+    const { status, data } = await userModule.deleteUser(req.params.id);
     res.status(status).json(data);
 });
 
