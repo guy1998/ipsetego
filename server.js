@@ -5,6 +5,8 @@ const { sequelize } = require('./models/index');
 const llmRouter = require('./routers/llm');
 const authRouter = require('./routers/auth');
 const userRouter = require('./routers/user');
+const experienceRouter = require('./routers/experience');
+const projectRouter = require('./routers/project');
 
 const allowedOrigins = [
   "http://localhost:3000",
@@ -31,6 +33,8 @@ app.use(
 app.use('/model', llmRouter);
 app.use('/auth', authRouter);
 app.use('/user', userRouter);
+app.use('/project', projectRouter);
+app.use('/experience', experienceRouter);
 
 const PORT = process.env.PORT || 1989;
 

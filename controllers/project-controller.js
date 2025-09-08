@@ -1,7 +1,7 @@
 const { internalServerError, responseWithData, dataLessResponse } = require("../common/reused-responses");
 const { User, Project } = require('../models');
 
-const createProject = async (projectInfo) => {
+const createProject = async (projectInfo, userId) => {
     try {
         const user = await User.findByPk(userId);
         const newProject = user.createProject({ ...projectInfo });
