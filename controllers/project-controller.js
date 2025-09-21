@@ -35,8 +35,7 @@ const deleteProject = async (projectId) => {
 const listProject = async (userId) => {
     try {
         const projects = await Project.findAll({
-            where: { userId },
-            order: [['date', 'DESC']]
+            where: { userId }
         });
         return responseWithData(200, "Data retrieved!", projects);
     } catch (error) {

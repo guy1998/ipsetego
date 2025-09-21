@@ -10,12 +10,12 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 app.post('/new-experience', authorize, async (req, res) => {
-    const { status, data } = await experienceModule.createExperience(req.body.experienceInfo, retrieveId(req));
+    const { status, data } = await experienceModule.createExperience(retrieveId(req), req.body);
     res.status(status).json(data);
 });
 
 app.put('/update/:experienceId', authorize, async (req, res) => {
-    const { status, data } = await experienceModule.editExperience(req.params.experienceId, req.body.newInfo);
+    const { status, data } = await experienceModule.editExperience(req.params.experienceId, req.body);
     res.status(status).json(data);
 });
 

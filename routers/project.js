@@ -10,12 +10,12 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 app.post('/new-project', authorize, async (req, res) => {
-    const { status, data } = await projectModule.createProject(req.body.projectInfo, retrieveId(req));
+    const { status, data } = await projectModule.createProject(req.body, retrieveId(req));
     res.status(status).json(data);
 });
 
 app.put('/update/:projectId', authorize, async (req, res) => {
-    const { status, data } = await projectModule.editProject(req.params.projectId, req.body.newInfo);
+    const { status, data } = await projectModule.editProject(req.params.projectId, req.body);
     res.status(status).json(data);
 });
 
