@@ -35,15 +35,15 @@ const logout = async (req, res) => {
     }
 };
 
-const register = (req, res) => {
-    const { status, data } = userModule.cacheUserForConfirmation(req.body);
+const register = async (req, res) => {
+    const { status, data } = await userModule.cacheUserForConfirmation(req.body);
     res.status(status).json(data);
 };
 
 const confirmRegistration = async (req, res) => {
     const userData = userModule.retrieveCache(req.body.otp);
     if(userData) {
-        const { status, data } = userModule.createUser(userData);
+        const { status, data } = await userModule.createUser(userData);
         res.status(status).json(data);
     } else {
         res.status(401).json({ message: "This OTP is invalid!" });

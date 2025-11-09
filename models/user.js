@@ -11,9 +11,9 @@ module.exports = (sequelize, DataTypes) => {
     linkedin: { type: DataTypes.STRING, allowNull: true },
     github: { type: DataTypes.STRING, allowNull: true },
     xing: { type: DataTypes.STRING, allowNull: true },
-    email: { type: DataTypes.STRING, unique: true },
+    email: { type: DataTypes.STRING, unique: true }, // Create 1st time
     password: { type: DataTypes.STRING, allowNull: false }, // Create 1st time
-    personalLink: { type: DataTypes.STRING, allowNull: false, default: 'admin' }, // Create 1st time
+    personalSlug: { type: DataTypes.STRING, allowNull: false, default: 'admin' }, // Create 1st time
     pictureId: { type: DataTypes.STRING, allowNull: true },
     hobbies: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true },
     languages: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true }

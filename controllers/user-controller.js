@@ -5,6 +5,12 @@ const { User } = require('../models');
 const { retrieveId } = require('../utils/jwt');
 const { sendOtp } = require('../utils/mailer');
 const { generateOtp, sanitizeInput, passwordVerifier, passwordHasher } = require('../utils/security');
+let uuidv4;
+import('uuid').then(module => {
+  uuidv4 = module.v4;
+}).catch(err => {
+  console.error('Failed to import uuid:', err);
+});
 
 const sanitizeData = (data) => {
     const sanitizedData = {};
@@ -22,15 +28,31 @@ const storeData = (otp, data) => {
     cache.set(otp, data);
 };
 
-const cacheUserForConfirmation = (userData) => {
+const checkUniqueness = async (email) => {
+    try {
+        const user = await User.findOne({ where: { email } });
+        return user === null;
+    } catch(error) {
+        return false;
+    }
+};
+
+const cacheUserForConfirmation = async (userData) => {
     try {
         const sanitizedData = sanitizeData(userData);
-        const otp = generateOtp();
-        const emailResult = sendOtp(sanitizeData.email, otp);
-        if (emailResult) {
-            storeData(otp, sanitizedData);
+        const unique = await checkUniqueness(sanitizedData.email);
+        if(!unique) {
+            return dataLessResponse(400, "User with this email already exists!")
         }
-        return dataLessResponse(200, "Email sent waiting for confirmation!")
+        const personalSlug = `${userData.name}-${userData.lastname}-${uuidv4()}`;
+        const otp = generateOtp();
+        const emailResult = await sendOtp(sanitizedData.email, otp);
+        if (emailResult) {
+            storeData(otp, { ...sanitizedData, personalSlug });
+            return dataLessResponse(200, "Email sent waiting for confirmation!")
+        } else {
+            return dataLessResponse(400, "Email couldn't be sent! Please check the email address!")
+        }
     } catch (error) {
         return internalServerError();
     }

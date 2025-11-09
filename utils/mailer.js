@@ -2,16 +2,11 @@ const nodemailer = require('nodemailer');
 require('dotenv').config()
 
 const transporter = nodemailer.createTransport({
-  host: "mail.ipsetego.com",
-  port: 465, 
-  secure: true,
+  service: "gmail",
   auth: {
     user: process.env.SERVICE_EMAIL,
-    pass: process.env.SERVICE_PASSWORD
+    pass: process.env.SERVICE_PASS,
   },
-  tls: {
-    rejectUnauthorized: false
-  }
 });
 
 async function sendOtp(to, otp) {
@@ -43,5 +38,5 @@ async function sendOtp(to, otp) {
 }
 
 module.exports = {
-    sendOtp
+  sendOtp
 }

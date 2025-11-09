@@ -31,7 +31,8 @@
     "pg-hstore": "^2.3.4",
     "sanitize-html": "^2.17.0",
     "sequelize": "^6.37.7",
-    "sequelize-cli": "^6.6.3"
+    "sequelize-cli": "^6.6.3",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "sequelize-auto-migrations": "^1.0.3"
