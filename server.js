@@ -9,7 +9,7 @@ const experienceRouter = require('./routers/experience');
 const projectRouter = require('./routers/project');
 
 const allowedOrigins = [
-  "http://localhost:3000",
+  "http://localhost:8080",
 ];
 
 const path = require("path");

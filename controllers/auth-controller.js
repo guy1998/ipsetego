@@ -41,6 +41,7 @@ const register = async (req, res) => {
 };
 
 const confirmRegistration = async (req, res) => {
+    console.log(req.body.otp);
     const userData = userModule.retrieveCache(req.body.otp);
     if(userData) {
         const { status, data } = await userModule.createUser(userData);

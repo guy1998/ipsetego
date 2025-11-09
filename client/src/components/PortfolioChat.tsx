@@ -52,40 +52,6 @@ const PortfolioChat = () => {
   const contactSectionRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Static Q&A data for portfolio sections
-  const qaData: QAItem[] = [
-    {
-      question: "Who are you?",
-      answer: "I'm a passionate full-stack developer with 5+ years of experience building scalable web applications. I love creating beautiful, user-friendly interfaces and robust backend systems.",
-      category: 'about'
-    },
-    {
-      question: "What technologies do you work with?",
-      answer: "I specialize in React, TypeScript, Node.js, and Python. I'm also experienced with cloud platforms like AWS and have worked extensively with databases including PostgreSQL and MongoDB.",
-      category: 'about'
-    },
-    {
-      question: "What's your current role?",
-      answer: "I'm currently a Senior Frontend Developer at TechCorp, where I lead a team of 4 developers building next-generation SaaS products. I focus on creating scalable architectures and mentoring junior developers.",
-      category: 'experience'
-    },
-    {
-      question: "What's your most challenging project?",
-      answer: "I built a real-time collaboration platform from scratch, handling 10,000+ concurrent users. The biggest challenge was optimizing WebSocket connections and implementing conflict resolution for simultaneous edits.",
-      category: 'projects'
-    },
-    {
-      question: "What side projects are you working on?",
-      answer: "I'm currently building an AI-powered code review tool that helps developers learn best practices. It's built with OpenAI's API, React, and FastAPI, and I'm planning to launch it next month.",
-      category: 'projects'
-    },
-    {
-      question: "Do you write technical articles?",
-      answer: "Yes! I regularly write about web development, performance optimization, and developer productivity. My most popular article 'Mastering React Performance' has over 50k views on Medium.",
-      category: 'blog'
-    }
-  ];
-
   const scrollToSection = (section: 'portfolio' | 'projects' | 'contact' | 'chat') => {
     if (section === 'portfolio') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -250,40 +216,6 @@ const PortfolioChat = () => {
             </Button>
           </div>
         </Card>
-      </div>
-
-      {/* Q&A Portfolio Sections */}
-      <div className="max-w-4xl mx-auto px-4 py-16 space-y-8">
-        {qaData.map((qa, index) => (
-          <div key={index} className="space-y-4 chat-message">
-            {/* Question (User message style) */}
-            <div className="flex justify-end">
-              <div className="max-w-3xl">
-                <Card className="modern-card bg-user-message p-4 rounded-2xl rounded-br-md user-message">
-                  <p className="text-primary-foreground font-medium">{qa.question}</p>
-                </Card>
-                <div className="flex items-center justify-end mt-2 space-x-2">
-                  <span className="text-xs text-muted-foreground">You</span>
-                  <User className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-            </div>
-
-            {/* Answer (Assistant message style) */}
-            <div className="flex justify-start">
-              <div className="max-w-3xl">
-                <Card className="modern-card bg-assistant-message p-4 rounded-2xl rounded-bl-md assistant-message parallax-float">
-                  <p className="text-foreground leading-relaxed">{qa.answer}</p>
-                </Card>
-                <div className="flex items-center justify-start mt-2 space-x-2">
-                  <Bot className="w-4 h-4 text-primary" />
-                  <span className="text-xs text-muted-foreground">Alex</span>
-                  <span className="text-xs text-primary capitalize px-2 py-1 rounded-full bg-primary/10">#{qa.category}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
       </div>
 
       {/* Projects Section */}
