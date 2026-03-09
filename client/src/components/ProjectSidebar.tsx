@@ -10,12 +10,12 @@ interface Project {
   description: string;
   longDescription: string;
   image: string;
-  technologies: string[];
+  technologies?: string[]; // Optional array of technologies
   demoUrl?: string;
   githubUrl?: string;
-  featured: boolean;
-  category: 'web' | 'mobile' | 'fullstack';
-  year: string;
+  featured?: boolean;
+  category?: string;
+  year?: string;
 }
 
 interface ProjectSidebarProps {
@@ -47,17 +47,17 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ project, isOpen, onClos
           {/* Project Metadata */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Badge variant={project.featured ? 'default' : 'secondary'}>
-                {project.featured ? (
-                  <><Star className="w-3 h-3 mr-1" />Featured</>
-                ) : (
-                  project.category
-                )}
-              </Badge>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="w-3 h-3 mr-1" />
-                {project.year}
-              </div>
+              {project.category && (
+                <Badge variant="secondary">
+                  {project.category}
+                </Badge>
+              )}
+              {project.year && (
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  {project.year}
+                </div>
+              )}
             </div>
           </div>
 
@@ -69,20 +69,22 @@ const ProjectSidebar: React.FC<ProjectSidebarProps> = ({ project, isOpen, onClos
             </p>
           </div>
 
-          {/* Technologies */}
-          <div>
-            <h3 className="font-semibold mb-3 flex items-center">
-              <Code className="w-4 h-4 mr-2" />
-              Technologies Used
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {project.technologies.map((tech) => (
-                <Badge key={tech} variant="outline">
-                  {tech}
-                </Badge>
-              ))}
+          {/* Technologies - Optional */}
+          {project.technologies && project.technologies.length > 0 && (
+            <div>
+              <h3 className="font-semibold mb-3 flex items-center">
+                <Code className="w-4 h-4 mr-2" />
+                Technologies Used
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {project.technologies.map((tech) => (
+                  <Badge key={tech} variant="outline">
+                    {tech}
+                  </Badge>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Action Buttons */}
           <div className="space-y-3">

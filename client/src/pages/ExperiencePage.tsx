@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useTheme } from '@/hooks/use-theme';
-import { Moon, Sun, Home, Calendar, MapPin, Award } from 'lucide-react';
+import { Moon, Sun, Home, Calendar, MapPin, Award, Briefcase } from 'lucide-react';
 import ContactForm from '@/components/ContactForm';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,43 +13,45 @@ const ExperiencePage = () => {
   const navigate = useNavigate();
 
   const skills = [
-    { name: 'React/Next.js', level: 95 },
-    { name: 'TypeScript', level: 90 },
-    { name: 'Node.js', level: 85 },
-    { name: 'Python', level: 80 },
-    { name: 'AWS/Cloud', level: 75 },
-    { name: 'UI/UX Design', level: 70 },
+    { name: 'Project Management', level: 90 },
+    { name: 'Team Leadership', level: 88 },
+    { name: 'Strategic Planning', level: 85 },
+    { name: 'Problem Solving', level: 95 },
+    { name: 'Communication', level: 92 },
+    { name: 'Collaboration', level: 90 },
   ];
 
   const certifications = [
-    { name: 'AWS Solutions Architect', issuer: 'Amazon', year: '2024' },
-    { name: 'Google Cloud Professional', issuer: 'Google', year: '2023' },
-    { name: 'React Advanced Certification', issuer: 'Meta', year: '2023' },
+    { name: 'Professional Certification', issuer: 'Industry Organization', year: '2024' },
+    { name: 'Advanced Diploma', issuer: 'Training Institute', year: '2023' },
+    { name: 'Specialized Training', issuer: 'Professional Body', year: '2023' },
   ];
 
   const workExperience = [
     {
-      title: 'Senior Frontend Developer',
-      company: 'TechCorp Inc.',
-      period: '2022 - Present',
-      location: 'San Francisco, CA',
+      title: 'Senior Professional Position',
+      company: 'Organization Name',
+      period: 'Start Date - Present',
+      location: 'City, Country',
+      isRemote: false,
       description: [
-        'Lead a team of 4 developers in building next-generation SaaS products',
-        'Architected and implemented scalable frontend solutions serving 100k+ users',
-        'Reduced application load time by 40% through performance optimization',
-        'Mentored junior developers and established coding standards',
+        'Led initiatives and managed key responsibilities',
+        'Delivered significant projects and results',
+        'Collaborated with cross-functional teams',
+        'Mentored and developed team members',
       ],
     },
     {
-      title: 'Full-Stack Developer',
-      company: 'StartupXYZ',
-      period: '2020 - 2022',
+      title: 'Mid-Level Position',
+      company: 'Previous Organization',
+      period: 'Start Date - End Date',
       location: 'Remote',
+      isRemote: true,
       description: [
-        'Built full-stack web applications using React, Node.js, and PostgreSQL',
-        'Implemented real-time features using WebSocket and Redis',
-        'Collaborated with designers to create pixel-perfect user interfaces',
-        'Deployed applications to AWS with CI/CD pipelines',
+        'Contributed to major projects',
+        'Developed and improved processes',
+        'Worked with diverse teams and stakeholders',
+        'Built and strengthened professional skills',
       ],
     },
   ];
@@ -89,7 +91,7 @@ const ExperiencePage = () => {
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold mb-4">Experience & Skills</h1>
           <p className="text-xl text-muted-foreground">
-            5+ years of professional experience in full-stack development
+            Professional background and expertise
           </p>
         </div>
 
@@ -101,7 +103,7 @@ const ExperiencePage = () => {
             {workExperience.map((job, index) => (
               <Card key={index} className="p-6 mb-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-2xl font-semibold">{job.title}</h3>
                     <p className="text-primary font-medium text-lg">{job.company}</p>
                   </div>
@@ -114,6 +116,11 @@ const ExperiencePage = () => {
                       <MapPin className="w-4 h-4" />
                       <span>{job.location}</span>
                     </div>
+                    {job.isRemote && (
+                      <Badge variant="outline" className="mt-2">
+                        Remote
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <ul className="space-y-3 text-muted-foreground">
@@ -131,10 +138,10 @@ const ExperiencePage = () => {
 
         {/* Skills Section */}
         <div className="mb-16">
-          <h2 className="text-3xl font-bold mb-8">Technical Skills</h2>
+          <h2 className="text-3xl font-bold mb-8">Skills & Expertise</h2>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {skills.map((skill, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex justify-between">
@@ -145,15 +152,6 @@ const ExperiencePage = () => {
                 </div>
               ))}
             </div>
-
-            <Card className="p-6">
-              <h3 className="font-semibold mb-4 text-lg">Tech Stack</h3>
-              <div className="flex flex-wrap gap-2">
-                {['JavaScript', 'TypeScript', 'React', 'Next.js', 'Node.js', 'Python', 'FastAPI', 'PostgreSQL', 'MongoDB', 'Redis', 'AWS', 'Docker', 'Git'].map((tech) => (
-                  <Badge key={tech} variant="secondary">{tech}</Badge>
-                ))}
-              </div>
-            </Card>
           </div>
         </div>
 
@@ -177,28 +175,6 @@ const ExperiencePage = () => {
               </Card>
             ))}
           </div>
-
-          <Card className="p-6">
-            <h3 className="font-semibold mb-4 text-lg">Other Achievements</h3>
-            <ul className="space-y-3 text-muted-foreground">
-              <li className="flex items-start">
-                <span className="mr-3">•</span>
-                <span>Won "Best Developer Tool" at TechCorp Innovation Awards 2024</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-3">•</span>
-                <span>Published 10+ technical articles with 100k+ total views</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-3">•</span>
-                <span>Speaker at React Conference 2023</span>
-              </li>
-              <li className="flex items-start">
-                <span className="mr-3">•</span>
-                <span>Open source contributor with 500+ GitHub stars</span>
-              </li>
-            </ul>
-          </Card>
         </div>
 
         {/* Contact Section */}

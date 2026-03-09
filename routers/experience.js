@@ -34,7 +34,7 @@ app.get('/experience-item/:id', async (req, res) => {
     res.status(status).json(data);
 });
 
-app.delete('/:id', authorize, async (req, res) => {
+app.delete('/:id', authorize(), async (req, res) => {
     const { status, data } = await experienceModule.deleteExperience(req.params.id);
     res.status(status).json(data);
 });

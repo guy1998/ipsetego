@@ -2,8 +2,11 @@ module.exports = (sequelize, DataTypes) => {
   const Project = sequelize.define('Project', {
     title: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.STRING, allowNull: true },
+    category: { type: DataTypes.STRING, allowNull: true }, // web, mobile, design, writing, etc.
+    technologies: { type: DataTypes.JSON, allowNull: true }, // Optional array of technologies
     relatedLink: { type: DataTypes.STRING, allowNull: true },
-    imageId: { type: DataTypes.STRING, allowNull: true }
+    imageId: { type: DataTypes.STRING, allowNull: true },
+    year: { type: DataTypes.STRING, allowNull: true }
   });
 
   Project.associate = (models) => {

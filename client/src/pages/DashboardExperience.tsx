@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Edit2, Trash2, Calendar, MapPin } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { DatePickerWithYearMonth } from '@/components/DatePickerWithYearMonth';
+import { Plus, Edit2, Trash2, Calendar, MapPin, ChevronDown } from 'lucide-react';
+import { Api } from '@/api/api';
+import { useToast } from '@/hooks/use-toast';
+import { formatLocalDate } from '@/lib/utils';
 
 interface Experience {
   id: string;
@@ -33,29 +39,19 @@ interface Skill {
   category: string;
 }
 
+// Helper function to format date for display in cards (YYYY-MM format)
+const formatDateForDisplay = (dateStr: string): string => {
+  if (!dateStr) return '';
+  return dateStr.substring(0, 7); // Extract YYYY-MM from YYYY-MM-DD
+};
+
 const DashboardExperience = () => {
-  const [experiences, setExperiences] = useState<Experience[]>([
-    {
-      id: '1',
-      title: 'Senior Frontend Developer',
-      company: 'TechCorp Inc.',
-      location: 'San Francisco, CA',
-      startDate: '2022-01',
-      endDate: '2024-03',
-      isCurrentlyWorking: true,
-      description: 'Lead frontend development for SaaS products, mentoring junior developers.',
-    },
-    {
-      id: '2',
-      title: 'Full-Stack Developer',
-      company: 'StartupXYZ',
-      location: 'Remote',
-      startDate: '2020-06',
-      endDate: '2021-12',
-      isCurrentlyWorking: false,
-      description: 'Built full-stack applications using React, Node.js, and PostgreSQL.',
-    },
-  ]);
+  const api = Api.getInstance();
+  const { toast } = useToast();
+
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [isLoadingExp, setIsLoadingExp] = useState(true);
+  const [isSavingExp, setIsSavingExp] = useState(false);
 
   const [skills, setSkills] = useState<Skill[]>([
     { id: '1', name: 'React', level: 5, category: 'Frontend' },
@@ -68,8 +64,12 @@ const DashboardExperience = () => {
   // Experience Modal State
   const [isExpCreateOpen, setIsExpCreateOpen] = useState(false);
   const [isExpEditOpen, setIsExpEditOpen] = useState(false);
+  const [isDeleteExpOpen, setIsDeleteExpOpen] = useState(false);
   const [editingExp, setEditingExp] = useState<Experience | null>(null);
+  const [deletingExp, setDeletingExp] = useState<Experience | null>(null);
   const [expFormData, setExpFormData] = useState<Partial<Experience>>({});
+  const [isDeletingExp, setIsDeletingExp] = useState(false);
+  const [expValidationError, setExpValidationError] = useState<string>('');
 
   // Skill Modal State
   const [isSkillCreateOpen, setIsSkillCreateOpen] = useState(false);
@@ -77,44 +77,155 @@ const DashboardExperience = () => {
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const [skillFormData, setSkillFormData] = useState<Partial<Skill>>({});
 
+  // Fetch experiences on component mount
+  const fetchExperiences = useCallback(async () => {
+    setIsLoadingExp(true);
+    try {
+      const response = await api.get('/experience/list');
+      if (response.data.data) {
+        const formattedExperiences: Experience[] = response.data.data.map((exp: any) => ({
+          id: exp.id.toString(),
+          title: exp.title,
+          company: exp.company || '',
+          location: exp.location || '',
+          startDate: exp.startDate || '',
+          endDate: exp.endDate || '',
+          isCurrentlyWorking: exp.isCurrentlyWorking || false,
+          description: exp.description || '',
+        }));
+        setExperiences(formattedExperiences);
+      }
+    } catch (error) {
+      console.error('Error fetching experiences:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load experiences',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingExp(false);
+    }
+  }, [api, toast]);
+
+  useEffect(() => {
+    fetchExperiences();
+  }, [fetchExperiences]);
+
   // Experience Handlers
   const handleCreateExpOpen = () => {
     setExpFormData({ isCurrentlyWorking: false });
+    setExpValidationError('');
     setIsExpCreateOpen(true);
   };
 
   const handleEditExpOpen = (exp: Experience) => {
     setEditingExp(exp);
     setExpFormData(exp);
+    setExpValidationError('');
     setIsExpEditOpen(true);
   };
 
-  const handleSaveExp = () => {
-    if (editingExp) {
-      setExperiences(
-        experiences.map(e =>
-          e.id === editingExp.id ? { ...editingExp, ...expFormData } : e
-        ) as Experience[]
-      );
-      setIsExpEditOpen(false);
-    } else {
-      const newExp: Experience = {
-        id: Date.now().toString(),
-        title: expFormData.title || 'Job Title',
-        company: expFormData.company || 'Company',
+  const handleSaveExp = async () => {
+    // Clear previous validation errors
+    setExpValidationError('');
+
+    if (!expFormData.title || !expFormData.company || !expFormData.startDate) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate end date is not before start date
+    if (!expFormData.isCurrentlyWorking && expFormData.endDate) {
+      const startDate = new Date(expFormData.startDate);
+      const endDate = new Date(expFormData.endDate);
+      if (endDate < startDate) {
+        setExpValidationError('End date cannot be earlier than start date');
+        return;
+      }
+    }
+
+    setIsSavingExp(true);
+    try {
+      const payload = {
+        title: expFormData.title,
+        company: expFormData.company,
         location: expFormData.location || '',
-        startDate: expFormData.startDate || '',
-        endDate: expFormData.endDate || '',
-        isCurrentlyWorking: expFormData.isCurrentlyWorking || false,
         description: expFormData.description || '',
+        startDate: expFormData.startDate,
+        endDate: expFormData.isCurrentlyWorking ? null : (expFormData.endDate || ''),
+        isCurrentlyWorking: expFormData.isCurrentlyWorking || false,
       };
-      setExperiences([...experiences, newExp]);
-      setIsExpCreateOpen(false);
+
+      if (editingExp) {
+        await api.put(`/experience/update/${editingExp.id}`, payload);
+        toast({
+          title: 'Success',
+          description: 'Experience updated successfully',
+        });
+        setIsExpEditOpen(false);
+      } else {
+        await api.post('/experience/new-experience', payload);
+        toast({
+          title: 'Success',
+          description: 'Experience added successfully',
+        });
+        setIsExpCreateOpen(false);
+      }
+
+      // Refresh experiences
+      await fetchExperiences();
+      setExpFormData({});
+      setEditingExp(null);
+    } catch (error) {
+      console.error('Error saving experience:', error);
+      toast({
+        title: 'Error',
+        description: editingExp
+          ? 'Failed to update experience'
+          : 'Failed to add experience',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingExp(false);
     }
   };
 
   const handleDeleteExp = (id: string) => {
-    setExperiences(experiences.filter(e => e.id !== id));
+    const exp = experiences.find(e => e.id === id);
+    if (exp) {
+      setDeletingExp(exp);
+      setIsDeleteExpOpen(true);
+    }
+  };
+
+  const confirmDeleteExp = async () => {
+    if (!deletingExp) return;
+
+    setIsDeletingExp(true);
+    try {
+      await api.delete(`/experience/${deletingExp.id}`);
+      toast({
+        title: 'Success',
+        description: 'Experience deleted successfully',
+      });
+      setIsDeleteExpOpen(false);
+      setDeletingExp(null);
+      // Refresh experiences
+      await fetchExperiences();
+    } catch (error) {
+      console.error('Error deleting experience:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete experience',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingExp(false);
+    }
   };
 
   // Skill Handlers
@@ -197,7 +308,7 @@ const DashboardExperience = () => {
             <h2 className="text-2xl font-bold">Work Experience</h2>
             <Dialog open={isExpCreateOpen} onOpenChange={setIsExpCreateOpen}>
               <DialogTrigger asChild>
-                <Button onClick={handleCreateExpOpen} className="gap-2">
+                <Button onClick={handleCreateExpOpen} className="gap-2" disabled={isSavingExp}>
                   <Plus className="w-4 h-4" />
                   Add Experience
                 </Button>
@@ -212,7 +323,7 @@ const DashboardExperience = () => {
                 <div className="space-y-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="exp-title">Job Title</Label>
+                      <Label htmlFor="exp-title">Job Title *</Label>
                       <Input
                         id="exp-title"
                         placeholder="Senior Developer"
@@ -226,7 +337,7 @@ const DashboardExperience = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="exp-company">Company</Label>
+                      <Label htmlFor="exp-company">Company *</Label>
                       <Input
                         id="exp-company"
                         placeholder="Company Name"
@@ -256,33 +367,81 @@ const DashboardExperience = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="exp-start">Start Date</Label>
-                      <Input
-                        id="exp-start"
-                        type="month"
-                        value={expFormData.startDate || ''}
-                        onChange={(e) =>
-                          setExpFormData({
-                            ...expFormData,
-                            startDate: e.target.value,
-                          })
-                        }
-                      />
+                      <Label htmlFor="exp-start">Start Date *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal"
+                          >
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {expFormData.startDate
+                              ? new Date(expFormData.startDate).toLocaleDateString()
+                              : 'Pick a date'}
+                            <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <DatePickerWithYearMonth
+                            selected={
+                              expFormData.startDate
+                                ? new Date(expFormData.startDate)
+                                : undefined
+                            }
+                            onSelect={(date) => {
+                              if (date) {
+                                const formattedDate = formatLocalDate(date);
+                                setExpFormData({
+                                  ...expFormData,
+                                  startDate: formattedDate,
+                                });
+                              }
+                            }}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date('1900-01-01')
+                            }
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="exp-end">End Date</Label>
-                      <Input
-                        id="exp-end"
-                        type="month"
-                        disabled={expFormData.isCurrentlyWorking}
-                        value={expFormData.endDate || ''}
-                        onChange={(e) =>
-                          setExpFormData({
-                            ...expFormData,
-                            endDate: e.target.value,
-                          })
-                        }
-                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal"
+                            disabled={expFormData.isCurrentlyWorking}
+                          >
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {expFormData.endDate
+                              ? new Date(expFormData.endDate).toLocaleDateString()
+                              : 'Pick a date'}
+                            <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <DatePickerWithYearMonth
+                            selected={
+                              expFormData.endDate
+                                ? new Date(expFormData.endDate)
+                                : undefined
+                            }
+                            onSelect={(date) => {
+                              if (date) {
+                                const formattedDate = formatLocalDate(date);
+                                setExpFormData({
+                                  ...expFormData,
+                                  endDate: formattedDate,
+                                });
+                              }
+                            }}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date('1900-01-01')
+                            }
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -300,6 +459,11 @@ const DashboardExperience = () => {
                     />
                     <Label htmlFor="exp-current">Currently Working Here</Label>
                   </div>
+                  {expValidationError && (
+                    <div className="bg-destructive/10 border border-destructive/50 text-destructive px-3 py-2 rounded-md text-sm">
+                      {expValidationError}
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="exp-description">Description</Label>
                     <textarea
@@ -321,10 +485,13 @@ const DashboardExperience = () => {
                   <Button
                     variant="outline"
                     onClick={() => setIsExpCreateOpen(false)}
+                    disabled={isSavingExp}
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleSaveExp}>Add Experience</Button>
+                  <Button onClick={handleSaveExp} disabled={isSavingExp}>
+                    {isSavingExp ? 'Saving...' : 'Add Experience'}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -332,7 +499,11 @@ const DashboardExperience = () => {
 
           {/* Experience List */}
           <div className="space-y-4">
-            {experiences.length === 0 ? (
+            {isLoadingExp ? (
+              <Card className="p-12 border-border/20 text-center">
+                <p className="text-muted-foreground">Loading experiences...</p>
+              </Card>
+            ) : experiences.length === 0 ? (
               <Card className="p-12 border-border/20 text-center">
                 <p className="text-muted-foreground mb-4">
                   No work experience yet
@@ -363,8 +534,8 @@ const DashboardExperience = () => {
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      {exp.startDate} -{' '}
-                      {exp.isCurrentlyWorking ? 'Present' : exp.endDate}
+                      {formatDateForDisplay(exp.startDate)} -{' '}
+                      {exp.isCurrentlyWorking ? 'Present' : formatDateForDisplay(exp.endDate)}
                     </div>
                   </div>
 
@@ -406,7 +577,7 @@ const DashboardExperience = () => {
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="edit-exp-title">Job Title</Label>
+                    <Label htmlFor="edit-exp-title">Job Title *</Label>
                     <Input
                       id="edit-exp-title"
                       placeholder="Senior Developer"
@@ -420,7 +591,7 @@ const DashboardExperience = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-exp-company">Company</Label>
+                    <Label htmlFor="edit-exp-company">Company *</Label>
                     <Input
                       id="edit-exp-company"
                       placeholder="Company Name"
@@ -450,33 +621,81 @@ const DashboardExperience = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="edit-exp-start">Start Date</Label>
-                    <Input
-                      id="edit-exp-start"
-                      type="month"
-                      value={expFormData.startDate || ''}
-                      onChange={(e) =>
-                        setExpFormData({
-                          ...expFormData,
-                          startDate: e.target.value,
-                        })
-                      }
-                    />
+                    <Label htmlFor="edit-exp-start">Start Date *</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {expFormData.startDate
+                            ? new Date(expFormData.startDate).toLocaleDateString()
+                            : 'Pick a date'}
+                          <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <DatePickerWithYearMonth
+                          selected={
+                            expFormData.startDate
+                              ? new Date(expFormData.startDate)
+                              : undefined
+                          }
+                          onSelect={(date) => {
+                            if (date) {
+                              const formattedDate = formatLocalDate(date);
+                              setExpFormData({
+                                ...expFormData,
+                                startDate: formattedDate,
+                              });
+                            }
+                          }}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date('1900-01-01')
+                          }
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="edit-exp-end">End Date</Label>
-                    <Input
-                      id="edit-exp-end"
-                      type="month"
-                      disabled={expFormData.isCurrentlyWorking}
-                      value={expFormData.endDate || ''}
-                      onChange={(e) =>
-                        setExpFormData({
-                          ...expFormData,
-                          endDate: e.target.value,
-                        })
-                      }
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                          disabled={expFormData.isCurrentlyWorking}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {expFormData.endDate
+                            ? new Date(expFormData.endDate).toLocaleDateString()
+                            : 'Pick a date'}
+                          <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <DatePickerWithYearMonth
+                          selected={
+                            expFormData.endDate
+                              ? new Date(expFormData.endDate)
+                              : undefined
+                          }
+                          onSelect={(date) => {
+                            if (date) {
+                              const formattedDate = formatLocalDate(date);
+                              setExpFormData({
+                                ...expFormData,
+                                endDate: formattedDate,
+                              });
+                            }
+                          }}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date('1900-01-01')
+                          }
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -496,6 +715,11 @@ const DashboardExperience = () => {
                     Currently Working Here
                   </Label>
                 </div>
+                {expValidationError && (
+                  <div className="bg-destructive/10 border border-destructive/50 text-destructive px-3 py-2 rounded-md text-sm">
+                    {expValidationError}
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="edit-exp-description">Description</Label>
                   <textarea
@@ -517,10 +741,50 @@ const DashboardExperience = () => {
                 <Button
                   variant="outline"
                   onClick={() => setIsExpEditOpen(false)}
+                  disabled={isSavingExp}
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleSaveExp}>Save Changes</Button>
+                <Button onClick={handleSaveExp} disabled={isSavingExp}>
+                  {isSavingExp ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Experience Confirmation Dialog */}
+          <Dialog open={isDeleteExpOpen} onOpenChange={setIsDeleteExpOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Delete Experience</DialogTitle>
+                <DialogDescription>
+                  This action cannot be undone. This will permanently delete the experience record.
+                </DialogDescription>
+              </DialogHeader>
+              {deletingExp && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+                  <p className="font-semibold text-destructive">{deletingExp.title}</p>
+                  <p className="text-sm text-muted-foreground">{deletingExp.company}</p>
+                </div>
+              )}
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDeleteExpOpen(false);
+                    setDeletingExp(null);
+                  }}
+                  disabled={isDeletingExp}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={confirmDeleteExp}
+                  disabled={isDeletingExp}
+                >
+                  {isDeletingExp ? 'Deleting...' : 'Delete'}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>

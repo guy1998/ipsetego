@@ -40,12 +40,6 @@ const PORT = process.env.PORT || 1989;
 
 async function startServer() {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ force: true });
-    } else {
-      await sequelize.sync();
-    }
-
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on port ${PORT}`);
     });
