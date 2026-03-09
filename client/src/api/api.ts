@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { BACKEND_URL } from "@/lib/constants";
+import { toast } from 'sonner';
 
 export class Api {
   private axiosInstance: AxiosInstance;
@@ -19,7 +20,23 @@ export class Api {
       (response: AxiosResponse) => response,
       (error) => {
         if (error.response && error.response.status === 401) {
-          alert("You're unauthorized!")
+          // Only show unauthorized message on protected routes (/app/*)
+          const currentPath = window.location.pathname;
+          const isProtectedRoute = currentPath.startsWith('/app/');
+          const isAuthPage = ['/login', '/sign-up', '/forgot-password', '/reset-password'].some(
+            page => currentPath.includes(page)
+          );
+
+          if (isProtectedRoute && !isAuthPage) {
+            toast.error('Session Expired', {
+              description: 'Your session has expired. Please log in again.',
+              duration: 4000,
+            });
+            // Redirect to login after showing the toast
+            setTimeout(() => {
+              window.location.href = '/login';
+            }, 1500);
+          }
         }
         return Promise.reject(error);
       }

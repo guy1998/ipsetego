@@ -16,7 +16,13 @@ module.exports = (sequelize, DataTypes) => {
     personalSlug: { type: DataTypes.STRING, allowNull: false, default: 'admin' }, // Create 1st time
     pictureId: { type: DataTypes.STRING, allowNull: true },
     hobbies: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true },
-    languages: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true }
+    languages: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true },
+    skills: { 
+      type: DataTypes.JSON, 
+      allowNull: true,
+      defaultValue: [],
+      comment: 'Array of skills with name, category, and proficiency level'
+    }
   });
 
   User.addHook('beforeCreate', async (user, options) => {

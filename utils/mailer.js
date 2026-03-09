@@ -1,8 +1,11 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config()
 
+
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: 'smtp.ionos.de',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.SERVICE_EMAIL,
     pass: process.env.SERVICE_PASS,
@@ -12,7 +15,7 @@ const transporter = nodemailer.createTransport({
 async function sendOtp(to, otp) {
   try {
     const info = await transporter.sendMail({
-      from: '"Ipsetego" service@ipsetego.com',
+      from: 'service@ipsetego.com',
       to,
       subject: "Your OTP Code",
       html: `

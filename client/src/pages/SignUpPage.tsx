@@ -103,7 +103,7 @@ function SignUpPage() {
 
     return (
         <div className="login-page">
-            <div className="login-container">
+            <div className="login-container" style={{ maxWidth: '550px' }}>
                 <div className="login-card">
                     <header className="login-header">
                         <h1 className="login-title">Create Account</h1>

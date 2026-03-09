@@ -9,17 +9,17 @@ const { retrieveId } = require('../utils/jwt');
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-app.post('/new-project', authorize, async (req, res) => {
+app.post('/new-project', authorize(), async (req, res) => {
     const { status, data } = await projectModule.createProject(req.body, retrieveId(req));
     res.status(status).json(data);
 });
 
-app.put('/update/:projectId', authorize, async (req, res) => {
+app.put('/update/:projectId', authorize(), async (req, res) => {
     const { status, data } = await projectModule.editProject(req.params.projectId, req.body);
     res.status(status).json(data);
 });
 
-app.get('/list', authorize, async (req, res) => {
+app.get('/list', authorize(), async (req, res) => {
     const { status, data } = await projectModule.listProject(retrieveId(req));
     res.status(status).json(data);
 });

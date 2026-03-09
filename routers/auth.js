@@ -16,6 +16,6 @@ app.post('/register', authModule.register);
 
 app.post('/confirm', authModule.confirmRegistration);
 
-app.get('/authorize', authorize, (req, res) => res.status(200).json({ message: "Session valid!" }));
+app.get('/authorize', authorize(), (req, res) => res.status(200).json({ message: "Session valid!" }));
 
 module.exports = app;

@@ -2,27 +2,40 @@ import { Api } from "@/api/api";
 import "../assets/styles/LoginPage.css";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
+    const navigate = useNavigate();
     const api = Api.getInstance();
 
     const handleLogin = async (event) => {
         event.preventDefault();
         setIsLoading(true);
         try {
-            api.post('/auth/login', { email, password }).then(response => {
-                if (response.status === 200) {
-                    alert("Login");
-                } else {
-                    toast({
-                        title: "Error!",
-                        description: response.data.message,
-                    });
-                }
+            const response = await api.post('/auth/login', { email, password });
+            if (response.status === 200) {
+                toast({
+                    title: "Success!",
+                    description: "Login successful! Redirecting to dashboard...",
+                });
+                // Redirect to dashboard after successful login
+                setTimeout(() => {
+                    navigate('/app/dashboard');
+                }, 500);
+            } else {
+                toast({
+                    title: "Error!",
+                    description: response.data.message,
+                });
+            }
+        } catch (error) {
+            toast({
+                title: "Error!",
+                description: error.response?.data?.message || "Login failed. Please try again.",
             });
         } finally {
             setIsLoading(false);
