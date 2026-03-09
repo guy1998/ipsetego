@@ -53,13 +53,9 @@ const DashboardExperience = () => {
   const [isLoadingExp, setIsLoadingExp] = useState(true);
   const [isSavingExp, setIsSavingExp] = useState(false);
 
-  const [skills, setSkills] = useState<Skill[]>([
-    { id: '1', name: 'React', level: 5, category: 'Frontend' },
-    { id: '2', name: 'TypeScript', level: 5, category: 'Languages' },
-    { id: '3', name: 'Node.js', level: 4, category: 'Backend' },
-    { id: '4', name: 'MongoDB', level: 4, category: 'Databases' },
-    { id: '5', name: 'Python', level: 3, category: 'Languages' },
-  ]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [isLoadingSkills, setIsLoadingSkills] = useState(true);
+  const [isSavingSkills, setIsSavingSkills] = useState(false);
 
   // Experience Modal State
   const [isExpCreateOpen, setIsExpCreateOpen] = useState(false);
@@ -74,7 +70,9 @@ const DashboardExperience = () => {
   // Skill Modal State
   const [isSkillCreateOpen, setIsSkillCreateOpen] = useState(false);
   const [isSkillEditOpen, setIsSkillEditOpen] = useState(false);
+  const [isDeleteSkillOpen, setIsDeleteSkillOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
+  const [deletingSkill, setDeletingSkill] = useState<Skill | null>(null);
   const [skillFormData, setSkillFormData] = useState<Partial<Skill>>({});
 
   // Fetch experiences on component mount
@@ -107,9 +105,39 @@ const DashboardExperience = () => {
     }
   }, [api, toast]);
 
+  // Fetch skills from user profile
+  const fetchSkills = useCallback(async () => {
+    setIsLoadingSkills(true);
+    try {
+      const response = await api.get('/user/profile');
+      if (response.data.data && response.data.data.skills) {
+        const skillsData = Array.isArray(response.data.data.skills) 
+          ? response.data.data.skills
+          : [];
+        const formattedSkills: Skill[] = skillsData.map((skill: any, index: number) => ({
+          id: skill.id || `skill-${index}`,
+          name: skill.name,
+          category: skill.category,
+          level: skill.level,
+        }));
+        setSkills(formattedSkills);
+      }
+    } catch (error) {
+      console.error('Error fetching skills:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load skills',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingSkills(false);
+    }
+  }, [api, toast]);
+
   useEffect(() => {
     fetchExperiences();
-  }, [fetchExperiences]);
+    fetchSkills();
+  }, [fetchExperiences, fetchSkills]);
 
   // Experience Handlers
   const handleCreateExpOpen = () => {
@@ -240,28 +268,99 @@ const DashboardExperience = () => {
     setIsSkillEditOpen(true);
   };
 
-  const handleSaveSkill = () => {
-    if (editingSkill) {
-      setSkills(
-        skills.map(s =>
+  const handleSaveSkill = async () => {
+    if (!skillFormData.name || !skillFormData.category) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSavingSkills(true);
+    try {
+      let updatedSkills: Skill[];
+
+      if (editingSkill) {
+        updatedSkills = skills.map(s =>
           s.id === editingSkill.id ? { ...editingSkill, ...skillFormData } : s
-        ) as Skill[]
-      );
-      setIsSkillEditOpen(false);
-    } else {
-      const newSkill: Skill = {
-        id: Date.now().toString(),
-        name: skillFormData.name || 'Skill',
-        level: skillFormData.level || 3,
-        category: skillFormData.category || 'Others',
-      };
-      setSkills([...skills, newSkill]);
-      setIsSkillCreateOpen(false);
+        ) as Skill[];
+        setIsSkillEditOpen(false);
+      } else {
+        const newSkill: Skill = {
+          id: Date.now().toString(),
+          name: skillFormData.name || 'Skill',
+          level: skillFormData.level || 3,
+          category: skillFormData.category || 'Others',
+        };
+        updatedSkills = [...skills, newSkill];
+        setIsSkillCreateOpen(false);
+      }
+
+      // Update backend with the new skills array
+      await api.put('/user/update/self', { skills: updatedSkills });
+
+      // Update local state
+      setSkills(updatedSkills);
+      setSkillFormData({});
+      setEditingSkill(null);
+
+      toast({
+        title: 'Success',
+        description: editingSkill
+          ? 'Skill updated successfully'
+          : 'Skill added successfully',
+      });
+    } catch (error) {
+      console.error('Error saving skill:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save skill',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingSkills(false);
     }
   };
 
   const handleDeleteSkill = (id: string) => {
-    setSkills(skills.filter(s => s.id !== id));
+    const skill = skills.find(s => s.id === id);
+    if (skill) {
+      setDeletingSkill(skill);
+      setIsDeleteSkillOpen(true);
+    }
+  };
+
+  const confirmDeleteSkill = async () => {
+    if (!deletingSkill) return;
+
+    setIsSavingSkills(true);
+    try {
+      const updatedSkills = skills.filter(s => s.id !== deletingSkill.id);
+      
+      // Update backend with the new skills array
+      await api.put('/user/update/self', { skills: updatedSkills });
+
+      // Update local state
+      setSkills(updatedSkills);
+      setIsDeleteSkillOpen(false);
+      setDeletingSkill(null);
+
+      toast({
+        title: 'Success',
+        description: 'Skill deleted successfully',
+      });
+    } catch (error) {
+      console.error('Error deleting skill:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete skill',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingSkills(false);
+    }
   };
 
   const getLevelLabel = (level: number) => {
@@ -790,13 +889,12 @@ const DashboardExperience = () => {
           </Dialog>
         </TabsContent>
 
-        {/* Skills Tab */}
         <TabsContent value="skills" className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Skills</h2>
             <Dialog open={isSkillCreateOpen} onOpenChange={setIsSkillCreateOpen}>
               <DialogTrigger asChild>
-                <Button onClick={handleCreateSkillOpen} className="gap-2">
+                <Button onClick={handleCreateSkillOpen} className="gap-2" disabled={isSavingSkills}>
                   <Plus className="w-4 h-4" />
                   Add Skill
                 </Button>
@@ -810,7 +908,7 @@ const DashboardExperience = () => {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="skill-name">Skill Name</Label>
+                    <Label htmlFor="skill-name">Skill Name *</Label>
                     <Input
                       id="skill-name"
                       placeholder="e.g., React"
@@ -824,7 +922,7 @@ const DashboardExperience = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="skill-category">Category</Label>
+                    <Label htmlFor="skill-category">Category *</Label>
                     <Input
                       id="skill-category"
                       placeholder="e.g., Frontend, Backend"
@@ -862,10 +960,13 @@ const DashboardExperience = () => {
                   <Button
                     variant="outline"
                     onClick={() => setIsSkillCreateOpen(false)}
+                    disabled={isSavingSkills}
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleSaveSkill}>Add Skill</Button>
+                  <Button onClick={handleSaveSkill} disabled={isSavingSkills}>
+                    {isSavingSkills ? 'Saving...' : 'Add Skill'}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -873,7 +974,11 @@ const DashboardExperience = () => {
 
           {/* Skills List */}
           <div className="space-y-4">
-            {skills.length === 0 ? (
+            {isLoadingSkills ? (
+              <Card className="p-12 border-border/20 text-center">
+                <p className="text-muted-foreground">Loading skills...</p>
+              </Card>
+            ) : skills.length === 0 ? (
               <Card className="p-12 border-border/20 text-center">
                 <p className="text-muted-foreground mb-4">No skills yet</p>
                 <Button onClick={handleCreateSkillOpen}>
@@ -911,6 +1016,7 @@ const DashboardExperience = () => {
                         variant="outline"
                         className="flex-1"
                         onClick={() => handleEditSkillOpen(skill)}
+                        disabled={isSavingSkills}
                       >
                         <Edit2 className="w-4 h-4 mr-2" />
                         Edit
@@ -920,6 +1026,7 @@ const DashboardExperience = () => {
                         variant="outline"
                         className="text-destructive hover:text-destructive"
                         onClick={() => handleDeleteSkill(skill.id)}
+                        disabled={isSavingSkills}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -939,7 +1046,7 @@ const DashboardExperience = () => {
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-skill-name">Skill Name</Label>
+                  <Label htmlFor="edit-skill-name">Skill Name *</Label>
                   <Input
                     id="edit-skill-name"
                     placeholder="e.g., React"
@@ -953,7 +1060,7 @@ const DashboardExperience = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-skill-category">Category</Label>
+                  <Label htmlFor="edit-skill-category">Category *</Label>
                   <Input
                     id="edit-skill-category"
                     placeholder="e.g., Frontend, Backend"
@@ -991,10 +1098,50 @@ const DashboardExperience = () => {
                 <Button
                   variant="outline"
                   onClick={() => setIsSkillEditOpen(false)}
+                  disabled={isSavingSkills}
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleSaveSkill}>Save Changes</Button>
+                <Button onClick={handleSaveSkill} disabled={isSavingSkills}>
+                  {isSavingSkills ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Skill Confirmation Dialog */}
+          <Dialog open={isDeleteSkillOpen} onOpenChange={setIsDeleteSkillOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Delete Skill</DialogTitle>
+                <DialogDescription>
+                  This action cannot be undone. This will permanently delete the skill.
+                </DialogDescription>
+              </DialogHeader>
+              {deletingSkill && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+                  <p className="font-semibold text-destructive">{deletingSkill.name}</p>
+                  <p className="text-sm text-muted-foreground">{deletingSkill.category}</p>
+                </div>
+              )}
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDeleteSkillOpen(false);
+                    setDeletingSkill(null);
+                  }}
+                  disabled={isSavingSkills}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={confirmDeleteSkill}
+                  disabled={isSavingSkills}
+                >
+                  {isSavingSkills ? 'Deleting...' : 'Delete'}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
