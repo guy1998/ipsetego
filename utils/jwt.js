@@ -23,7 +23,7 @@ const tokenChecker = (token) => {
 const tokenRefresher = (refreshToken) => {
     const checkToken = tokenChecker(refreshToken);
     if (checkToken.result) {
-        const content = tokenIssuing(checkToken.payload)
+        const content = tokenIssuing({ userId: checkToken.payload.userId, role: checkToken.payload.role });
         return { result: true, content }
     } else if (checkToken.code === 2) {
         return { result: false, content: "Token expired" }
