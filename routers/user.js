@@ -5,6 +5,11 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const authorize = require('../middlewares/authorization');
 const { retrieveId } = require('../utils/jwt');
+const multer = require('multer');
+
+// Configure multer for memory storage
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -59,6 +64,17 @@ app.post('/create', (req, res, next) => authorize(req, res, next, 'admin'), asyn
 //TODO: remove this when hosting online
 app.post('/create-dev', async (req, res) => {
     const { status, data } = await userModule.createUser(req.body);
+    res.status(status).json(data);
+});
+
+app.post('/upload-profile-picture', authorize(), upload.single('profilePicture'), async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const userId = retrieveId(req);
+    const { status, data } = await userModule.uploadProfilePicture(userId, file.buffer, file.originalname);
     res.status(status).json(data);
 });
 

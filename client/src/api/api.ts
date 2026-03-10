@@ -9,9 +9,6 @@ export class Api {
   constructor() {
     this.axiosInstance = axios.create({
       baseURL: BACKEND_URL,
-      headers: {
-        "Content-Type": "application/json",
-      },
       withCredentials: true,
     });
 
@@ -50,23 +47,23 @@ export class Api {
     return Api.instance;
   }
 
-  async get(path: string, params?: any) {
-    const res = await this.axiosInstance.get(path, { params });
+  async get(path: string, params?: any, config?: any) {
+    const res = await this.axiosInstance.get(path, { params, ...config });
     return res;
   }
 
-  async post(path: string, body?: any) {
-    const res = await this.axiosInstance.post(path, body);
+  async post(path: string, body?: any, config?: any) {
+    const res = await this.axiosInstance.post(path, body, config);
     return res;
   }
 
-  async put(path: string, body?: any) {
-    const res = await this.axiosInstance.put(path, body);
+  async put(path: string, body?: any, config?: any) {
+    const res = await this.axiosInstance.put(path, body, config);
     return res;
   }
 
-  async delete(path: string, body?: any) {
-    const res = await this.axiosInstance.delete(path, { data: body });
+  async delete(path: string, body?: any, config?: any) {
+    const res = await this.axiosInstance.delete(path, { data: body, ...config });
     return res;
   }
 }

@@ -7,6 +7,7 @@ const authRouter = require('./routers/auth');
 const userRouter = require('./routers/user');
 const experienceRouter = require('./routers/experience');
 const projectRouter = require('./routers/project');
+const fileRouter = require('./routers/file');
 
 const allowedOrigins = [
   "http://localhost:8080",
@@ -35,6 +36,7 @@ app.use('/auth', authRouter);
 app.use('/user', userRouter);
 app.use('/project', projectRouter);
 app.use('/experience', experienceRouter);
+app.use('/uploads', fileRouter);
 
 const PORT = process.env.PORT || 1989;
 

@@ -5,6 +5,7 @@ const { User } = require('../models');
 const { retrieveId } = require('../utils/jwt');
 const { sendOtp } = require('../utils/mailer');
 const { generateOtp, sanitizeInput, passwordVerifier, passwordHasher } = require('../utils/security');
+const { uploadFile, deleteFile } = require('../utils/supabase');
 let uuidv4;
 import('uuid').then(module => {
   uuidv4 = module.v4;
@@ -144,6 +145,45 @@ const getCurrentUser = async (req) => {
     }
 };
 
+const uploadProfilePicture = async (userId, fileBuffer, fileName) => {
+    try {
+        const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME;
+        const user = await User.findOne({ where: { id: userId } });
+        if (!user) {
+            return dataLessResponse(404, "User not found!");
+        }
+
+        // Delete old profile picture if it exists
+        if (user.pictureId) {
+            try {
+                await deleteFile(BUCKET_NAME, user.pictureId);
+            } catch (error) {
+                console.log(`Warning: Could not delete old profile picture: ${error.message}`);
+            }
+        }
+
+        // Generate new file path
+        const fileExtension = fileName.split('.').pop();
+        const newPictureId = `${userId}-${Date.now()}.${fileExtension}`;
+
+        // Upload new profile picture
+        await uploadFile(BUCKET_NAME, newPictureId, fileBuffer, `image/${fileExtension}`);
+
+        // Update user's pictureId
+        const [updatedCount, updatedUsers] = await User.update(
+            { pictureId: newPictureId },
+            { where: { id: userId }, returning: true }
+        );
+
+        return updatedCount 
+            ? responseWithData(200, "Profile picture uploaded successfully!", { pictureId: newPictureId, user: updatedUsers[0] })
+            : dataLessResponse(404, "User not found!");
+    } catch (error) {
+        console.log(error);
+        return internalServerError();
+    }
+};
+
 module.exports = {
     createUser,
     editPassword,
@@ -152,6 +192,7 @@ module.exports = {
     listUsers,
     getUser,
     getCurrentUser,
+    uploadProfilePicture,
     cacheUserForConfirmation,
     retrieveCache
 }

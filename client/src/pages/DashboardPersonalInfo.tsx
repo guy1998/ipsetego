@@ -17,6 +17,7 @@ import { Plus, Edit2, Trash2, Link as LinkIcon } from 'lucide-react';
 import { Api } from '@/api/api';
 import { useToast } from '@/hooks/use-toast';
 import PortfolioDashboardLayout from '@/components/PortfolioDashboardLayout';
+import ProfilePictureUploader from '@/components/ProfilePictureUploader';
 
 interface PersonalInfo {
   name: string;
@@ -87,8 +88,8 @@ const DashboardPersonalInfo = () => {
   const [isEditingSocial, setIsEditingSocial] = useState(false);
   const [isSavingSocial, setIsSavingSocial] = useState(false);
 
-  // Profile Image State
-  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  // Current User State
+  const [currentUser, setCurrentUser] = useState<{ id: string; pictureId?: string } | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -99,6 +100,10 @@ const DashboardPersonalInfo = () => {
       const response = await api.get('/user/profile');
       if (response.data.data) {
         const user = response.data.data;
+        setCurrentUser({
+          id: user.id,
+          pictureId: user.pictureId || undefined,
+        });
         setPersonalInfo({
           name: user.name || '',
           lastname: user.lastname || '',
@@ -419,15 +424,8 @@ const DashboardPersonalInfo = () => {
     }
   };
 
-  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleProfilePictureUploadSuccess = () => {
+    fetchUserData();
   };
 
   if (isLoading) {
@@ -454,40 +452,19 @@ const DashboardPersonalInfo = () => {
       {/* Profile Image Section */}
       <Card className="p-8 border-border/20">
         <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="w-32 h-32 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center overflow-hidden">
-            {profileImagePreview ? (
-              <img
-                src={profileImagePreview}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-white text-5xl font-bold">
-                {personalInfo.name.charAt(0)}{personalInfo.lastname.charAt(0)}
-              </span>
-            )}
-          </div>
+          {currentUser && (
+            <ProfilePictureUploader
+              userId={currentUser.id}
+              currentPictureId={currentUser.pictureId}
+              userName={`${personalInfo.name} ${personalInfo.lastname}`}
+              onUploadSuccess={handleProfilePictureUploadSuccess}
+            />
+          )}
           <div className="text-center">
             <h2 className="text-2xl font-bold">
               {personalInfo.name} {personalInfo.lastname}
             </h2>
             <p className="text-muted-foreground">Portfolio Profile</p>
-          </div>
-          <div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleProfileImageChange}
-              className="hidden"
-              id="profile-image-input"
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => document.getElementById('profile-image-input')?.click()}
-            >
-              Change Profile Image
-            </Button>
           </div>
         </div>
       </Card>
