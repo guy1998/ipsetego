@@ -5,6 +5,11 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const authorize = require('../middlewares/authorization');
 const { retrieveId } = require('../utils/jwt');
+const multer = require('multer');
+
+// Configure multer for memory storage
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -16,6 +21,26 @@ app.post('/new-project', authorize(), async (req, res) => {
 
 app.put('/update/:projectId', authorize(), async (req, res) => {
     const { status, data } = await projectModule.editProject(req.params.projectId, req.body);
+    res.status(status).json(data);
+});
+
+app.post('/upload-image/:projectId', authorize(), upload.single('projectImage'), async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const { status, data } = await projectModule.uploadProjectImage(req.params.projectId, file.buffer, file.originalname);
+    res.status(status).json(data);
+});
+
+app.post('/update-image/:projectId', authorize(), upload.single('projectImage'), async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const { status, data } = await projectModule.updateProjectImage(req.params.projectId, file.buffer, file.originalname);
     res.status(status).json(data);
 });
 

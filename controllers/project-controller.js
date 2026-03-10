@@ -1,5 +1,6 @@
 const { internalServerError, responseWithData, dataLessResponse } = require("../common/reused-responses");
 const { User, Project } = require('../models');
+const { uploadFile, deleteFile } = require('../utils/supabase');
 
 const createProject = async (projectInfo, userId) => {
     try {
@@ -52,10 +53,90 @@ const getProject = async (projectId) => {
     }
 };
 
+const uploadProjectImage = async (projectId, fileBuffer, fileName) => {
+    try {
+        const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME;
+        const project = await Project.findByPk(projectId);
+        if (!project) {
+            return dataLessResponse(404, "Project not found!");
+        }
+
+        // Delete old project image if it exists
+        if (project.imageId) {
+            try {
+                await deleteFile(BUCKET_NAME, project.imageId);
+            } catch (error) {
+                console.log(`Warning: Could not delete old project image: ${error.message}`);
+            }
+        }
+
+        // Generate new file path
+        const fileExtension = fileName.split('.').pop();
+        const newImageId = `projects-${projectId}-${Date.now()}.${fileExtension}`;
+
+        // Upload new project image
+        await uploadFile(BUCKET_NAME, newImageId, fileBuffer, `image/${fileExtension}`);
+
+        // Update project's imageId
+        const [updatedCount, updatedProjects] = await Project.update(
+            { imageId: newImageId },
+            { where: { id: projectId }, returning: true }
+        );
+
+        return updatedCount 
+            ? responseWithData(200, "Project image uploaded successfully!", { imageId: newImageId, project: updatedProjects[0] })
+            : dataLessResponse(404, "Project not found!");
+    } catch (error) {
+        console.log(error);
+        return internalServerError();
+    }
+};
+
+const updateProjectImage = async (projectId, fileBuffer, fileName) => {
+    try {
+        const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME;
+        const project = await Project.findByPk(projectId);
+        if (!project) {
+            return dataLessResponse(404, "Project not found!");
+        }
+
+        // Delete old project image if it exists
+        if (project.imageId) {
+            try {
+                await deleteFile(BUCKET_NAME, project.imageId);
+            } catch (error) {
+                console.log(`Warning: Could not delete old project image: ${error.message}`);
+            }
+        }
+
+        // Generate new file path
+        const fileExtension = fileName.split('.').pop();
+        const newImageId = `projects-${projectId}-${Date.now()}.${fileExtension}`;
+
+        // Upload new project image
+        await uploadFile(BUCKET_NAME, newImageId, fileBuffer, `image/${fileExtension}`);
+
+        // Update project's imageId
+        const [updatedCount, updatedProjects] = await Project.update(
+            { imageId: newImageId },
+            { where: { id: projectId }, returning: true }
+        );
+
+        return updatedCount 
+            ? responseWithData(200, "Project image updated successfully!", { imageId: newImageId, project: updatedProjects[0] })
+            : dataLessResponse(404, "Project not found!");
+    } catch (error) {
+        console.log(error);
+        return internalServerError();
+    }
+};
+
 module.exports = {
     createProject,
     editProject,
     deleteProject,
     listProject,
-    getProject
+    getProject,
+    uploadProjectImage,
+    updateProjectImage
 }
