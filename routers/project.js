@@ -59,7 +59,7 @@ app.get('/project-item/:id', async (req, res) => {
     res.status(status).json(data);
 });
 
-app.delete('/:id', authorize, async (req, res) => {
+app.delete('/:id', authorize(), async (req, res) => {
     const { status, data } = await projectModule.deleteProject(req.params.id);
     res.status(status).json(data);
 });

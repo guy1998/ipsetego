@@ -43,6 +43,9 @@ const DashboardProjects = () => {
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [newTechnology, setNewTechnology] = useState<string>('');
   const [editNewTechnology, setEditNewTechnology] = useState<string>('');
+  const [isDeleteProjectOpen, setIsDeleteProjectOpen] = useState(false);
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
 
   // Fetch projects on component mount
   useEffect(() => {
@@ -176,6 +179,7 @@ const DashboardProjects = () => {
 
         toast.success('Project updated successfully');
         setIsEditOpen(false);
+        setEditingProject(null);
       } else {
         // Create new project
         const projectData = {
@@ -189,7 +193,6 @@ const DashboardProjects = () => {
 
         const createResponse = await api.post('/project/new-project', projectData);
         const newProject = createResponse.data.data;
-
         // Upload image if selected
         if (imageFile) {
           await uploadImage(newProject.id, imageFile, false);
@@ -212,12 +215,11 @@ const DashboardProjects = () => {
 
   const handleDeleteProject = async (id: string) => {
     try {
-      if (!confirm('Are you sure you want to delete this project?')) {
-        return;
-      }
-
       await api.delete(`/project/${id}`);
       toast.success('Project deleted successfully');
+      setIsDeleteProjectOpen(false);
+      setIsDeletingProject(false);
+      setDeletingProject(null);
       await fetchProjects();
     } catch (error: any) {
       console.error('Error deleting project:', error);
@@ -422,6 +424,42 @@ const DashboardProjects = () => {
             </div>
           </DialogContent>
         </Dialog>
+        <Dialog open={isDeleteProjectOpen} onOpenChange={setIsDeleteProjectOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Delete Project</DialogTitle>
+                <DialogDescription>
+                  This action cannot be undone. This will permanently delete the project.
+                </DialogDescription>
+              </DialogHeader>
+              {deletingProject && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+                  <p className="font-semibold text-destructive">{deletingProject.title}</p>
+                </div>
+              )}
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDeleteProjectOpen(false);
+                    setDeletingProject(null);
+                  }}
+                  disabled={isDeletingProject}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => { 
+                    handleDeleteProject(deletingProject!.id); 
+                  }}
+                  disabled={isDeletingProject}
+                >
+                  {isDeletingProject ? 'Deleting...' : 'Delete'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
       </div>
 
       {/* Projects Grid */}
@@ -512,7 +550,10 @@ const DashboardProjects = () => {
                 size="sm"
                 variant="outline"
                 className="text-destructive hover:text-destructive"
-                onClick={() => handleDeleteProject(project.id)}
+                onClick={() => {
+                  setDeletingProject(project);
+                  setIsDeleteProjectOpen(true);
+                }}
               >
                 <Trash2 className="w-4 h-4" />
               </Button>

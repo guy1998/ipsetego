@@ -5,7 +5,7 @@ const { uploadFile, deleteFile } = require('../utils/supabase');
 const createProject = async (projectInfo, userId) => {
     try {
         const user = await User.findByPk(userId);
-        const newProject = user.createProject({ ...projectInfo });
+        const newProject = await user.createProject({ ...projectInfo });
         return responseWithData(200, "Project added successfully!", newProject);
     } catch (error) {
         return internalServerError();
@@ -26,6 +26,17 @@ const editProject = async (projectId, newINfo) => {
 
 const deleteProject = async (projectId) => {
     try {
+        const project = await Project.findByPk(projectId);
+        if (!project) {
+            return dataLessResponse(404, "Project not found!");
+        }
+        if (project.imageId) {
+            try {
+                await deleteFile(process.env.SUPABASE_BUCKET_NAME, project.imageId);
+            } catch (error) {
+                console.log(`Warning: Could not delete old project image: ${error.message}`);
+            }
+        }
         await Project.destroy({ where: { id: projectId } });
         return dataLessResponse(200, "Project deleted successfully!");
     } catch (error) {
