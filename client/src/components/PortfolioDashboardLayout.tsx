@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/use-theme';
-import { Moon, Sun, Eye, Home, Briefcase, Award, LogOut } from 'lucide-react';
+import { Moon, Sun, Eye, Home, Briefcase, Award, LogOut, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Api } from '@/api/api';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +41,12 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
       icon: Home,
       href: '/app/dashboard',
       id: 'dashboard',
+    },
+    {
+      label: 'Personal Information',
+      icon: User,
+      href: '/app/dashboard/personal',
+      id: 'personal',
     },
     {
       label: 'Projects',

@@ -17,6 +17,7 @@ import ExperiencePage from "./pages/ExperiencePage";
 import PreviewProjectsPage from "./pages/PreviewProjectsPage";
 import PreviewExperiencePage from "./pages/PreviewExperiencePage";
 import Dashboard from "./pages/Dashboard";
+import DashboardPersonalInfo from "./pages/DashboardPersonalInfo";
 import ProjectsDashboard from "./pages/ProjectsDashboard";
 import ExperienceDashboard from "./pages/ExperienceDashboard";
 import PortfolioChat from "./components/PortfolioChat";
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/preview/experience" element={<PreviewExperiencePage />} />
               <Route path="/app" element={<Index />} />
               <Route path="/app/dashboard" element={<Dashboard />} />
+              <Route path="/app/dashboard/personal" element={<DashboardPersonalInfo />} />
               <Route path="/app/dashboard/projects" element={<ProjectsDashboard />} />
               <Route path="/app/dashboard/experience" element={<ExperienceDashboard />} />
               <Route path="/app/projects" element={<ProjectsPage />} />

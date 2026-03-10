@@ -16,7 +16,12 @@ module.exports = (sequelize, DataTypes) => {
     personalSlug: { type: DataTypes.STRING, allowNull: false, default: 'admin' }, // Create 1st time
     pictureId: { type: DataTypes.STRING, allowNull: true },
     hobbies: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true },
-    languages: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true },
+    languages: { 
+      type: DataTypes.JSON, 
+      allowNull: true,
+      defaultValue: [],
+      comment: 'Array of language objects with name and level (1-5)'
+    },
     skills: { 
       type: DataTypes.JSON, 
       allowNull: true,
