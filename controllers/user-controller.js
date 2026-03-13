@@ -45,11 +45,12 @@ const cacheUserForConfirmation = async (userData) => {
         if(!unique) {
             return dataLessResponse(400, "User with this email already exists!")
         }
-        const personalSlug = `${userData.name}-${userData.lastname}-${uuidv4()}`;
+        const publicId = uuidv4();
+        const personalSlug = `${userData.name}-${userData.lastname}-${publicId}`;
         const otp = generateOtp();
         const emailResult = await sendOtp(sanitizedData.email, otp);
         if (emailResult) {
-            storeData(otp, { ...sanitizedData, personalSlug });
+            storeData(otp, { ...sanitizedData, personalSlug, publicId });
             return dataLessResponse(200, "Email sent waiting for confirmation!")
         } else {
             return dataLessResponse(400, "Email couldn't be sent! Please check the email address!")
@@ -135,6 +136,21 @@ const getUser = async (userId) => {
     }
 };
 
+const getUserByPublicId = async (publicId) => {
+    try {
+        const user = await User.findOne({
+            where: { publicId },
+            attributes: ['name', 'lastname', 'email', 'personalSlug', 'publicId', 'pictureId', 'resumeId', 'linkedin', 'github', 'xing', 'skills', 'languages', 'hobbies']
+        });
+        if (!user) {
+            return dataLessResponse(404, "Portfolio not found!");
+        }
+        return responseWithData(200, "User retrieved!", user);
+    } catch (error) {
+        return internalServerError()
+    }
+};
+
 const getCurrentUser = async (req) => {
     try {
         const userId = retrieveId(req);
@@ -184,6 +200,46 @@ const uploadProfilePicture = async (userId, fileBuffer, fileName) => {
     }
 };
 
+const uploadCV = async (userId, fileBuffer, fileName) => {
+    try {
+        const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME;
+        const user = await User.findOne({ where: { id: userId } });
+        if (!user) {
+            return dataLessResponse(404, "User not found!");
+        }
+
+        // Delete old CV if it exists
+        if (user.resumeId) {
+            try {
+                await deleteFile(BUCKET_NAME, user.resumeId);
+            } catch (error) {
+                console.log(`Warning: Could not delete old CV: ${error.message}`);
+            }
+        }
+
+        // Generate new file path
+        const fileExtension = fileName.split('.').pop().toLowerCase();
+        const newResumeId = `cv-${userId}-${Date.now()}.${fileExtension}`;
+        const contentType = fileExtension === 'pdf' ? 'application/pdf' : `image/${fileExtension}`;
+
+        // Upload new CV
+        await uploadFile(BUCKET_NAME, newResumeId, fileBuffer, contentType);
+
+        // Update user's resumeId
+        const [updatedCount, updatedUsers] = await User.update(
+            { resumeId: newResumeId },
+            { where: { id: userId }, returning: true }
+        );
+
+        return updatedCount
+            ? responseWithData(200, "CV uploaded successfully!", { resumeId: newResumeId, user: updatedUsers[0] })
+            : dataLessResponse(404, "User not found!");
+    } catch (error) {
+        console.log(error);
+        return internalServerError();
+    }
+};
+
 module.exports = {
     createUser,
     editPassword,
@@ -191,8 +247,10 @@ module.exports = {
     deleteUser,
     listUsers,
     getUser,
+    getUserByPublicId,
     getCurrentUser,
     uploadProfilePicture,
+    uploadCV,
     cacheUserForConfirmation,
     retrieveCache
 }

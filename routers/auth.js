@@ -6,7 +6,6 @@ const cookieParser = require('cookie-parser');
 const authorize = require('../middlewares/authorization.js');
 
 app.use(bodyParser.json());
-app.use(cookieParser());
 
 app.post('/login', authModule.login);
 

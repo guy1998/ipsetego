@@ -12,7 +12,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 app.use(bodyParser.json());
-app.use(cookieParser());
 
 app.get('/list', authorize('admin'), async (req, res) => {
     const { status, data } = await userModule.listUsers();
@@ -61,6 +60,11 @@ app.post('/create', (req, res, next) => authorize(req, res, next, 'admin'), asyn
     res.status(status).json(data);
 });
 
+app.get('/public/:publicId', async (req, res) => {
+    const { status, data } = await userModule.getUserByPublicId(req.params.publicId);
+    res.status(status).json(data);
+});
+
 //TODO: remove this when hosting online
 app.post('/create-dev', async (req, res) => {
     const { status, data } = await userModule.createUser(req.body);
@@ -75,6 +79,17 @@ app.post('/upload-profile-picture', authorize(), upload.single('profilePicture')
 
     const userId = retrieveId(req);
     const { status, data } = await userModule.uploadProfilePicture(userId, file.buffer, file.originalname);
+    res.status(status).json(data);
+});
+
+app.post('/upload-cv', authorize(), upload.single('cv'), async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const userId = retrieveId(req);
+    const { status, data } = await userModule.uploadCV(userId, file.buffer, file.originalname);
     res.status(status).json(data);
 });
 

@@ -1,6 +1,22 @@
 const { internalServerError, responseWithData, dataLessResponse } = require("../common/reused-responses");
 const { User, Experience } = require('../models');
 
+const listExperienceByPublicId = async (publicId) => {
+    try {
+        const user = await User.findOne({ where: { publicId } });
+        if (!user) {
+            return dataLessResponse(404, "Portfolio not found!");
+        }
+        const experiences = await Experience.findAll({
+            where: { userId: user.id },
+            order: [['startDate', 'DESC']]
+        });
+        return responseWithData(200, "Data retrieved!", experiences);
+    } catch (error) {
+        return internalServerError();
+    }
+};
+
 const createExperience = async (userId, experienceInfo) => {
     try {
         const user = await User.findByPk(userId);
@@ -58,5 +74,6 @@ module.exports = {
     editExperience,
     deleteExperience,
     listExperience,
+    listExperienceByPublicId,
     getExperience
 }

@@ -9,18 +9,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { FileText, Upload, Eye, Trash2, Download } from 'lucide-react';
+import { FileText, Upload, Eye, Download } from 'lucide-react';
+import { Api } from '@/api/api';
 
 interface CVUploaderProps {
-  onCVUpload?: (file: string, fileName: string) => void;
+  resumeId?: string;
+  onUploadSuccess?: (resumeId: string) => void;
 }
 
-const CVUploader = ({ onCVUpload }: CVUploaderProps) => {
-  const [cvFile, setCvFile] = useState<{ data: string; name: string } | null>(
-    null
-  );
+const CVUploader = ({ resumeId, onUploadSuccess }: CVUploaderProps) => {
+  const api = Api.getInstance();
   const [isDragging, setIsDragging] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -36,45 +38,81 @@ const CVUploader = ({ onCVUpload }: CVUploaderProps) => {
     setIsDragging(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      handleFileSelect(files[0]);
+      uploadFile(files[0]);
     }
   };
 
-  const handleFileSelect = (file: File) => {
-    // Accept PDF and image files
-    if (
-      file.type === 'application/pdf' ||
-      file.type.startsWith('image/')
-    ) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCvFile({
-          data: reader.result as string,
-          name: file.name,
-        });
-        onCVUpload?.(reader.result as string, file.name);
-      };
-      reader.readAsDataURL(file);
-    } else {
+  const uploadFile = async (file: File) => {
+    if (file.type !== 'application/pdf' && !file.type.startsWith('image/')) {
       alert('Please upload a PDF or image file');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('cv', file);
+      const response = await api.post('/user/upload-cv', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (response.data.data?.resumeId) {
+        setPreviewBlobUrl(null);
+        onUploadSuccess?.(response.data.data.resumeId);
+      }
+    } catch (error) {
+      console.error('CV upload failed:', error);
+      alert('Failed to upload CV. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      handleFileSelect(files[0]);
+      uploadFile(files[0]);
     }
   };
 
-  const handleDeleteCV = () => {
-    setCvFile(null);
+  const loadPreview = async () => {
+    if (!resumeId) return;
+    if (previewBlobUrl) {
+      setIsPreviewOpen(true);
+      return;
+    }
+    try {
+      const response = await api.get(`/uploads/cv/${resumeId}`, undefined, {
+        responseType: 'blob',
+      });
+      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      setPreviewBlobUrl(url);
+      setIsPreviewOpen(true);
+    } catch (error) {
+      console.error('Failed to load CV preview:', error);
+      alert('Failed to load CV preview.');
+    }
   };
 
-  const getFileSize = (base64: string) => {
-    const binary = atob(base64.split(',')[1]);
-    return (binary.length / (1024 * 1024)).toFixed(2);
+  const handleDownload = async () => {
+    if (!resumeId) return;
+    try {
+      const response = await api.get(`/uploads/cv/${resumeId}`, undefined, {
+        responseType: 'blob',
+      });
+      const blob = new Blob([response.data]);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = resumeId;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download CV:', error);
+    }
   };
+
+  const isPdf = resumeId ? resumeId.toLowerCase().endsWith('.pdf') : true;
 
   return (
     <>
@@ -85,19 +123,19 @@ const CVUploader = ({ onCVUpload }: CVUploaderProps) => {
               <FileText className="w-5 h-5 text-primary" />
               Curriculum Vitae
             </h3>
-            {cvFile && (
+            {resumeId && (
               <Badge variant="default" className="bg-green-500/10 text-green-700 dark:text-green-400">
                 Uploaded
               </Badge>
             )}
           </div>
 
-          {!cvFile ? (
+          {!resumeId ? (
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              onClick={() => document.getElementById('cv-input')?.click()}
+              onClick={() => !isUploading && document.getElementById('cv-input')?.click()}
               className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all duration-200 ${
                 isDragging
                   ? 'border-primary bg-primary/5'
@@ -109,7 +147,9 @@ const CVUploader = ({ onCVUpload }: CVUploaderProps) => {
                   <Upload className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium mb-1">Drag and drop your CV here</p>
+                  <p className="font-medium mb-1">
+                    {isUploading ? 'Uploading...' : 'Drag and drop your CV here'}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     or click to browse (PDF or Image)
                   </p>
@@ -125,21 +165,13 @@ const CVUploader = ({ onCVUpload }: CVUploaderProps) => {
             </div>
           ) : (
             <div className="border border-border/20 rounded-lg p-6 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0">
-                    {cvFile.data.includes('pdf') ? (
-                      <FileText className="w-6 h-6 text-primary" />
-                    ) : (
-                      <FileText className="w-6 h-6 text-primary" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium">{cvFile.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {getFileSize(cvFile.data)} MB
-                    </p>
-                  </div>
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0">
+                  <FileText className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Resume</p>
+                  <p className="text-sm text-muted-foreground">{isPdf ? 'PDF document' : 'Image file'}</p>
                 </div>
               </div>
 
@@ -148,7 +180,7 @@ const CVUploader = ({ onCVUpload }: CVUploaderProps) => {
                   size="sm"
                   variant="outline"
                   className="flex-1"
-                  onClick={() => setIsPreviewOpen(true)}
+                  onClick={loadPreview}
                 >
                   <Eye className="w-4 h-4 mr-2" />
                   Preview
@@ -156,23 +188,10 @@ const CVUploader = ({ onCVUpload }: CVUploaderProps) => {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = cvFile.data;
-                    link.download = cvFile.name;
-                    link.click();
-                  }}
+                  onClick={handleDownload}
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Download
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-destructive hover:text-destructive"
-                  onClick={handleDeleteCV}
-                >
-                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
 
@@ -180,13 +199,14 @@ const CVUploader = ({ onCVUpload }: CVUploaderProps) => {
                 size="sm"
                 variant="ghost"
                 className="w-full text-muted-foreground hover:text-foreground"
-                onClick={() => document.getElementById('cv-input')?.click()}
+                disabled={isUploading}
+                onClick={() => document.getElementById('cv-input-replace')?.click()}
               >
                 <Upload className="w-4 h-4 mr-2" />
-                Change CV
+                {isUploading ? 'Uploading...' : 'Change CV'}
               </Button>
               <input
-                id="cv-input"
+                id="cv-input-replace"
                 type="file"
                 accept=".pdf,image/*"
                 hidden
@@ -206,23 +226,25 @@ const CVUploader = ({ onCVUpload }: CVUploaderProps) => {
         <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>CV Preview</DialogTitle>
-            <DialogDescription>{cvFile?.name}</DialogDescription>
+            <DialogDescription>Resume</DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-auto">
-            {cvFile?.data.includes('pdf') ? (
-              <iframe
-                src={cvFile.data}
-                className="w-full h-full border-0 rounded-lg"
-                title="CV Preview"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full bg-muted rounded-lg">
-                <img
-                  src={cvFile?.data}
-                  alt="CV Preview"
-                  className="max-w-full max-h-full object-contain"
+            {previewBlobUrl && (
+              isPdf ? (
+                <iframe
+                  src={previewBlobUrl}
+                  className="w-full h-full border-0 rounded-lg"
+                  title="CV Preview"
                 />
-              </div>
+              ) : (
+                <div className="flex items-center justify-center h-full bg-muted rounded-lg">
+                  <img
+                    src={previewBlobUrl}
+                    alt="CV Preview"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              )
             )}
           </div>
         </DialogContent>

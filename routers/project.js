@@ -12,7 +12,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 app.use(bodyParser.json());
-app.use(cookieParser());
 
 app.post('/new-project', authorize(), async (req, res) => {
     const { status, data } = await projectModule.createProject(req.body, retrieveId(req));
@@ -51,6 +50,11 @@ app.get('/list', authorize(), async (req, res) => {
 
 app.get('/list-spec/:userId', async (req, res) => {
     const { status, data } = await projectModule.listProject(req.params.userId);
+    res.status(status).json(data);
+});
+
+app.get('/list-public/:publicId', async (req, res) => {
+    const { status, data } = await projectModule.listProjectByPublicId(req.params.publicId);
     res.status(status).json(data);
 });
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/use-theme';
 import { Moon, Sun, Eye, Home, Briefcase, Award, LogOut, User } from 'lucide-react';
@@ -16,6 +16,24 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
   const location = useLocation();
   const api = Api.getInstance();
   const { toast } = useToast();
+  const [userName, setUserName] = useState('');
+  const [userInitials, setUserInitials] = useState('');
+  const [personalSlug, setPersonalSlug] = useState('');
+
+  useEffect(() => {
+    api.get('/user/profile').then((response) => {
+      if (response.data.data) {
+        const user = response.data.data;
+        const name = `${user.name || ''} ${user.lastname || ''}`.trim();
+        setUserName(name);
+        const initials = `${(user.name || '').charAt(0)}${(user.lastname || '').charAt(0)}`.toUpperCase();
+        setUserInitials(initials || 'U');
+        if (user.personalSlug) {
+          setPersonalSlug(user.personalSlug);
+        }
+      }
+    }).catch(() => {});
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -70,11 +88,14 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
       <aside className="fixed left-0 top-0 h-screen w-64 bg-card border-r border-border/20 flex flex-col z-40">
         {/* Logo/Header */}
         <div className="p-6 border-b border-border/20">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
-              <span className="text-white text-sm font-bold">AJ</span>
+          <div
+            className="flex items-center space-x-2 cursor-pointer"
+            onClick={() => navigate('/')}
+          >
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
+              <span className="text-white text-sm font-bold">ip</span>
             </div>
-            <span className="font-semibold">Portfolio Builder</span>
+            <span className="font-bold text-lg">ipsetego</span>
           </div>
         </div>
 
@@ -106,7 +127,7 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
             variant="outline"
             size="sm"
             className="w-full justify-start"
-            onClick={() => navigate('/preview')}
+            onClick={() => personalSlug ? navigate(`/portfolio/${personalSlug}`) : navigate('/preview')}
           >
             <Eye className="w-4 h-4 mr-2" />
             Preview Portfolio
@@ -148,9 +169,9 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">AJ</span>
+                  <span className="text-white text-sm font-bold">{userInitials}</span>
                 </div>
-                <span className="font-semibold ml-2">Alex Johnson</span>
+                <span className="font-semibold ml-2">{userName}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Button variant="ghost" size="sm" onClick={toggleTheme}>

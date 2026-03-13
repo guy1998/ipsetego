@@ -14,6 +14,7 @@ const allowedOrigins = [
 ];
 
 const path = require("path");
+const cookieParser = require("cookie-parser");
 __dirname = path.resolve();
 
 app.use(
@@ -30,6 +31,9 @@ app.use(
     optionsSuccessStatus: 204,
   })
 );
+
+app.use(cookieParser());
+
 
 app.use('/model', llmRouter);
 app.use('/auth', authRouter);

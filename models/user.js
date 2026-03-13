@@ -14,7 +14,9 @@ module.exports = (sequelize, DataTypes) => {
     email: { type: DataTypes.STRING, unique: true }, // Create 1st time
     password: { type: DataTypes.STRING, allowNull: false }, // Create 1st time
     personalSlug: { type: DataTypes.STRING, allowNull: false, default: 'admin' }, // Create 1st time
+    publicId: { type: DataTypes.STRING, allowNull: true, unique: true }, // UUID used in public portfolio URL
     pictureId: { type: DataTypes.STRING, allowNull: true },
+    resumeId: { type: DataTypes.STRING, allowNull: true },
     hobbies: { type: DataTypes.ARRAY(DataTypes.STRING), allowNull: true },
     languages: { 
       type: DataTypes.JSON, 

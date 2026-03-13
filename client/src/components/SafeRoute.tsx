@@ -15,10 +15,11 @@ function SafeRoute({ children }: SafeRouteProps) {
   // Routes that don't require authentication
   const PUBLIC_ROUTES = ['/', '/preview'];
   const PUBLIC_ROUTES_PREFIX = '/preview/';
+  const PUBLIC_PORTFOLIO_PREFIX = '/portfolio/';
   const AUTH_ROUTES = ['/login', '/forgot-password', '/reset-password', '/sign-up'];
   const PROTECTED_ROUTES_PREFIX = '/app/';
 
-  const isPublicRoute = PUBLIC_ROUTES.some(route => location.pathname === route) || location.pathname.startsWith(PUBLIC_ROUTES_PREFIX);
+  const isPublicRoute = PUBLIC_ROUTES.some(route => location.pathname === route) || location.pathname.startsWith(PUBLIC_ROUTES_PREFIX) || location.pathname.startsWith(PUBLIC_PORTFOLIO_PREFIX);
   const isAuthRoute = AUTH_ROUTES.some(route => location.pathname.includes(route));
   const isProtectedRoute = location.pathname.startsWith(PROTECTED_ROUTES_PREFIX);
 

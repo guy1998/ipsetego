@@ -1,25 +1,68 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { Briefcase, Award, Eye, Plus, Settings } from 'lucide-react';
 import CVUploader from '@/components/CVUploader';
+import { Api } from '@/api/api';
 
 const DashboardHome = () => {
   const navigate = useNavigate();
+  const api = Api.getInstance();
 
-  // Mock data
-  const projectsCount = 5;
-  const experienceCount = 3;
-  const skillsCount = 12;
-  const profileCompletion = 65;
+  const [userName, setUserName] = useState('');
+  const [projectsCount, setProjectsCount] = useState(0);
+  const [experienceCount, setExperienceCount] = useState(0);
+  const [skillsCount, setSkillsCount] = useState(0);
+  const [profileCompletion, setProfileCompletion] = useState(0);
+  const [resumeId, setResumeId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [profileRes, projectsRes, experienceRes] = await Promise.all([
+          api.get('/user/profile'),
+          api.get('/project/list'),
+          api.get('/experience/list'),
+        ]);
+
+        const user = profileRes.data.data;
+        const projects: any[] = projectsRes.data.data || [];
+        const experiences: any[] = experienceRes.data.data || [];
+
+        const name = `${user.name || ''} ${user.lastname || ''}`.trim();
+        setUserName(name);
+        setProjectsCount(projects.length);
+        setExperienceCount(experiences.length);
+
+        const skills: any[] = Array.isArray(user.skills) ? user.skills : [];
+        setSkillsCount(skills.length);
+
+        if (user.resumeId) {
+          setResumeId(user.resumeId);
+        }
+
+        // Profile completion: 4 criteria × 25% each
+        const hasExperiences = experiences.length > 0;
+        const hasProjects = projects.length > 0;
+        const hasSocialLinks = !!(user.linkedin || user.github || user.xing);
+        const hasSkills = skills.length > 0;
+        const completion = [hasExperiences, hasProjects, hasSocialLinks, hasSkills].filter(Boolean).length * 25;
+        setProfileCompletion(completion);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
       <div className="space-y-2">
-        <h1 className="text-4xl font-bold">Welcome back, Alex</h1>
+        <h1 className="text-4xl font-bold">Welcome back{userName ? `, ${userName.split(' ')[0]}` : ''}</h1>
         <p className="text-muted-foreground text-lg">
           Manage your portfolio, projects, and experience in one place.
         </p>
@@ -188,10 +231,8 @@ const DashboardHome = () => {
 
       {/* CV Uploader */}
       <CVUploader
-        onCVUpload={(file, fileName) => {
-          console.log('CV uploaded:', fileName);
-          // Handle CV upload - save to state or API
-        }}
+        resumeId={resumeId}
+        onUploadSuccess={(newResumeId) => setResumeId(newResumeId)}
       />
     </div>
   );

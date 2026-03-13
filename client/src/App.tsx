@@ -21,6 +21,9 @@ import DashboardPersonalInfo from "./pages/DashboardPersonalInfo";
 import ProjectsDashboard from "./pages/ProjectsDashboard";
 import ExperienceDashboard from "./pages/ExperienceDashboard";
 import PortfolioChat from "./components/PortfolioChat";
+import PublicPortfolioPage from "./pages/PublicPortfolioPage";
+import PublicProjectsPage from "./pages/PublicProjectsPage";
+import PublicExperiencePage from "./pages/PublicExperiencePage";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +51,9 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/sign-up" element={<SignUpPage />} />
+              <Route path="/portfolio/:personalSlug" element={<PublicPortfolioPage />} />
+              <Route path="/portfolio/:personalSlug/projects" element={<PublicProjectsPage />} />
+              <Route path="/portfolio/:personalSlug/experience" element={<PublicExperiencePage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

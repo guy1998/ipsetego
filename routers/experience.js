@@ -7,7 +7,6 @@ const authorize = require('../middlewares/authorization');
 const { retrieveId } = require('../utils/jwt');
 
 app.use(bodyParser.json());
-app.use(cookieParser());
 
 app.post('/new-experience', authorize(), async (req, res) => {
     const { status, data } = await experienceModule.createExperience(retrieveId(req), req.body);
@@ -26,6 +25,11 @@ app.get('/list', authorize(), async (req, res) => {
 
 app.get('/list-spec/:userId', async (req, res) => {
     const { status, data } = await experienceModule.listExperience(req.params.userId);
+    res.status(status).json(data);
+});
+
+app.get('/list-public/:publicId', async (req, res) => {
+    const { status, data } = await experienceModule.listExperienceByPublicId(req.params.publicId);
     res.status(status).json(data);
 });
 

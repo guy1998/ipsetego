@@ -1,0 +1,291 @@
+{
+    "tables": {
+        "Experiences": {
+            "tableName": "Experiences",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "primaryKey": true,
+                    "autoIncrement": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "title": {
+                    "allowNull": false,
+                    "field": "title",
+                    "seqType": "Sequelize.STRING"
+                },
+                "company": {
+                    "allowNull": true,
+                    "field": "company",
+                    "seqType": "Sequelize.STRING"
+                },
+                "description": {
+                    "allowNull": true,
+                    "field": "description",
+                    "seqType": "Sequelize.STRING"
+                },
+                "relatedLink": {
+                    "allowNull": true,
+                    "field": "relatedLink",
+                    "seqType": "Sequelize.STRING"
+                },
+                "startDate": {
+                    "allowNull": false,
+                    "field": "startDate",
+                    "seqType": "Sequelize.DATE"
+                },
+                "endDate": {
+                    "allowNull": true,
+                    "field": "endDate",
+                    "seqType": "Sequelize.DATE"
+                },
+                "isRemote": {
+                    "defaultValue": {
+                        "value": false
+                    },
+                    "field": "isRemote",
+                    "seqType": "Sequelize.BOOLEAN"
+                },
+                "location": {
+                    "allowNull": true,
+                    "field": "location",
+                    "seqType": "Sequelize.STRING"
+                },
+                "isCurrentlyWorking": {
+                    "defaultValue": {
+                        "value": false
+                    },
+                    "field": "isCurrentlyWorking",
+                    "seqType": "Sequelize.BOOLEAN"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "userId": {
+                    "allowNull": true,
+                    "references": {
+                        "model": "Users",
+                        "key": "id"
+                    },
+                    "onDelete": "SET NULL",
+                    "onUpdate": "CASCADE",
+                    "field": "userId",
+                    "seqType": "Sequelize.INTEGER"
+                }
+            },
+            "indexes": []
+        },
+        "Projects": {
+            "tableName": "Projects",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "primaryKey": true,
+                    "autoIncrement": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "title": {
+                    "allowNull": false,
+                    "field": "title",
+                    "seqType": "Sequelize.STRING"
+                },
+                "description": {
+                    "allowNull": true,
+                    "field": "description",
+                    "seqType": "Sequelize.STRING"
+                },
+                "category": {
+                    "allowNull": true,
+                    "field": "category",
+                    "seqType": "Sequelize.STRING"
+                },
+                "technologies": {
+                    "allowNull": true,
+                    "field": "technologies",
+                    "seqType": "Sequelize.JSON"
+                },
+                "relatedLink": {
+                    "allowNull": true,
+                    "field": "relatedLink",
+                    "seqType": "Sequelize.STRING"
+                },
+                "imageId": {
+                    "allowNull": true,
+                    "field": "imageId",
+                    "seqType": "Sequelize.STRING"
+                },
+                "year": {
+                    "allowNull": true,
+                    "field": "year",
+                    "seqType": "Sequelize.STRING"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "userId": {
+                    "allowNull": true,
+                    "references": {
+                        "model": "Users",
+                        "key": "id"
+                    },
+                    "onDelete": "SET NULL",
+                    "onUpdate": "CASCADE",
+                    "field": "userId",
+                    "seqType": "Sequelize.INTEGER"
+                }
+            },
+            "indexes": []
+        },
+        "Users": {
+            "tableName": "Users",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "primaryKey": true,
+                    "autoIncrement": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "name": {
+                    "allowNull": false,
+                    "field": "name",
+                    "seqType": "Sequelize.STRING"
+                },
+                "lastname": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": "admin"
+                    },
+                    "field": "lastname",
+                    "seqType": "Sequelize.STRING"
+                },
+                "phoneNumber": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": "admin"
+                    },
+                    "field": "phoneNumber",
+                    "seqType": "Sequelize.STRING"
+                },
+                "address": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": "admin"
+                    },
+                    "field": "address",
+                    "seqType": "Sequelize.STRING"
+                },
+                "role": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": "admin"
+                    },
+                    "field": "role",
+                    "seqType": "Sequelize.ENUM('admin', 'user')"
+                },
+                "birthday": {
+                    "allowNull": false,
+                    "field": "birthday",
+                    "seqType": "Sequelize.DATE"
+                },
+                "linkedin": {
+                    "allowNull": true,
+                    "field": "linkedin",
+                    "seqType": "Sequelize.STRING"
+                },
+                "github": {
+                    "allowNull": true,
+                    "field": "github",
+                    "seqType": "Sequelize.STRING"
+                },
+                "xing": {
+                    "allowNull": true,
+                    "field": "xing",
+                    "seqType": "Sequelize.STRING"
+                },
+                "email": {
+                    "unique": true,
+                    "field": "email",
+                    "seqType": "Sequelize.STRING"
+                },
+                "password": {
+                    "allowNull": false,
+                    "field": "password",
+                    "seqType": "Sequelize.STRING"
+                },
+                "personalSlug": {
+                    "allowNull": false,
+                    "default": "admin",
+                    "field": "personalSlug",
+                    "seqType": "Sequelize.STRING"
+                },
+                "pictureId": {
+                    "allowNull": true,
+                    "field": "pictureId",
+                    "seqType": "Sequelize.STRING"
+                },
+                "resumeId": {
+                    "allowNull": true,
+                    "field": "resumeId",
+                    "seqType": "Sequelize.STRING"
+                },
+                "hobbies": {
+                    "allowNull": true,
+                    "field": "hobbies",
+                    "seqType": "Sequelize.ARRAY(Sequelize.STRING)"
+                },
+                "languages": {
+                    "allowNull": true,
+                    "defaultValue": {
+                        "internal": true,
+                        "value": "Sequelize.Array"
+                    },
+                    "comment": "Array of language objects with name and level (1-5)",
+                    "field": "languages",
+                    "seqType": "Sequelize.JSON"
+                },
+                "skills": {
+                    "allowNull": true,
+                    "defaultValue": {
+                        "internal": true,
+                        "value": "Sequelize.Array"
+                    },
+                    "comment": "Array of skills with name, category, and proficiency level",
+                    "field": "skills",
+                    "seqType": "Sequelize.JSON"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                }
+            },
+            "indexes": []
+        }
+    },
+    "path": "C:\\Users\\user\\Documents\\MyProjects\\AppaSoftwares\\ipsetego\\migrations\\_current.json",
+    "backupPath": "C:\\Users\\user\\Documents\\MyProjects\\AppaSoftwares\\ipsetego\\migrations\\_current_bak.json",
+    "exists": false,
+    "revision": 1
+}

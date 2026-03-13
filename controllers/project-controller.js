@@ -2,6 +2,19 @@ const { internalServerError, responseWithData, dataLessResponse } = require("../
 const { User, Project } = require('../models');
 const { uploadFile, deleteFile } = require('../utils/supabase');
 
+const listProjectByPublicId = async (publicId) => {
+    try {
+        const user = await User.findOne({ where: { publicId } });
+        if (!user) {
+            return dataLessResponse(404, "Portfolio not found!");
+        }
+        const projects = await Project.findAll({ where: { userId: user.id } });
+        return responseWithData(200, "Data retrieved!", projects);
+    } catch (error) {
+        return internalServerError();
+    }
+};
+
 const createProject = async (projectInfo, userId) => {
     try {
         const user = await User.findByPk(userId);
@@ -147,6 +160,7 @@ module.exports = {
     editProject,
     deleteProject,
     listProject,
+    listProjectByPublicId,
     getProject,
     uploadProjectImage,
     updateProjectImage
