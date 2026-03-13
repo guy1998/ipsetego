@@ -29,7 +29,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
 
   // Construct image URL for display
   const getImageUrl = (pictureId: string) => {
-    return `${apiUrl}/uploads/image/${pictureId}`;
+    return pictureId ? `${apiUrl}/uploads/image/${pictureId}` : null;
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,7 +121,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
     <div className={`flex flex-col items-center gap-4 ${className}`}>
       <div className="relative group">
         <img
-          src={getImageUrl(currentPictureId) || `http://ui-avatars.com/api/?name=${userName.split(' ')[0]}+${userName.split(' ')[1]}`}
+          src={getImageUrl(currentPictureId) || `http://ui-avatars.com/api/?name=${userName}&background=6a26d1&color=ffffff`} // Fallback to avatar service
           alt={userName}
           className="h-32 w-32 rounded-full object-cover"
         />
