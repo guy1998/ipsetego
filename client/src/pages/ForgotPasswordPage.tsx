@@ -24,6 +24,12 @@ function ForgotPasswordPage() {
 
   return (
     <div className="login-page">
+      <div className="login-bg-blob" />
+      <div className="login-bg-blob" />
+      <div className="login-bg-blob" />
+      <div className="login-bg-blob" />
+      <div className="login-bg-blob" />
+
       <div className="login-container">
         <div className="login-card">
           <header className="login-header">

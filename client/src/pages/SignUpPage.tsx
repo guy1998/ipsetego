@@ -23,7 +23,7 @@ function SignUpPage() {
         return (data.name &&
             data.lastname &&
             data.email &&
-            data.phone &&
+            data.phoneNumber &&
             data.birthday &&
             data.address &&
             data.password);
@@ -110,8 +110,23 @@ function SignUpPage() {
 
     return (
         <div className="login-page">
+            {/* Floating glassmorphism blobs */}
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+
             <div className="login-container" style={{ maxWidth: '550px' }}>
                 <div className="login-card">
+                    {/* Logo linking back to landing page */}
+                    <a href="/" className="login-logo">
+                        <div className="login-logo-icon">
+                            <span>ip</span>
+                        </div>
+                        <span className="login-logo-name">ipsetego</span>
+                    </a>
+
                     <header className="login-header">
                         <h1 className="login-title">Create Account</h1>
                     </header>
@@ -161,7 +176,7 @@ function SignUpPage() {
                         <div className="input-group">
                             <input
                                 type="tel"
-                                name="phone"
+                                name="phoneNumber"
                                 placeholder="Phone Number"
                                 value={formData.phoneNumber}
                                 onChange={handleChange}
@@ -272,7 +287,6 @@ function OtpPage({ email }) {
             newOtp[index] = value;
             setOtp(newOtp);
 
-            // Auto-focus next input
             if (value !== '' && index < 5) {
                 const nextInput = document.getElementById(`otp-${index + 1}`);
                 if (nextInput) nextInput.focus();
@@ -319,7 +333,6 @@ function OtpPage({ email }) {
         } finally {
             setIsLoading(false);
         }
-
     };
 
     const handleResendOtp = () => {
@@ -333,8 +346,21 @@ function OtpPage({ email }) {
     if (isVerified) {
         return (
             <div className="login-page">
+                <div className="login-bg-blob" />
+                <div className="login-bg-blob" />
+                <div className="login-bg-blob" />
+                <div className="login-bg-blob" />
+                <div className="login-bg-blob" />
+
                 <div className="login-container">
                     <div className="login-card">
+                        <a href="/" className="login-logo">
+                            <div className="login-logo-icon">
+                                <span>ip</span>
+                            </div>
+                            <span className="login-logo-name">ipsetego</span>
+                        </a>
+
                         <header className="login-header">
                             <h1 className="login-title">Success!</h1>
                         </header>
@@ -362,8 +388,21 @@ function OtpPage({ email }) {
 
     return (
         <div className="login-page">
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+
             <div className="login-container">
                 <div className="login-card">
+                    <a href="/" className="login-logo">
+                        <div className="login-logo-icon">
+                            <span>ip</span>
+                        </div>
+                        <span className="login-logo-name">ipsetego</span>
+                    </a>
+
                     <header className="login-header">
                         <h1 className="login-title">Verify Email</h1>
                     </header>

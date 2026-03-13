@@ -22,7 +22,6 @@ function LoginPage() {
                     title: "Success!",
                     description: "Login successful! Redirecting to dashboard...",
                 });
-                // Redirect to dashboard after successful login
                 setTimeout(() => {
                     navigate('/app/dashboard');
                 }, 500);
@@ -44,10 +43,25 @@ function LoginPage() {
 
     return (
         <div className="login-page">
+            {/* Floating glassmorphism blobs */}
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+
             <div className="login-container">
                 <div className="login-card">
+                    {/* Logo linking back to landing page */}
+                    <a href="/" className="login-logo">
+                        <div className="login-logo-icon">
+                            <span>ip</span>
+                        </div>
+                        <span className="login-logo-name">ipsetego</span>
+                    </a>
+
                     <header className="login-header">
-                        <h1 className="login-title">Login</h1>
+                        <h1 className="login-title">Welcome back</h1>
                     </header>
 
                     <form onSubmit={handleLogin} className="login-form">
@@ -97,6 +111,7 @@ function LoginPage() {
                                 'Sign in'
                             )}
                         </button>
+
                         <div className="login-redirect">
                             <p>
                                 Don't have an account? <a href="/sign-up" className="forgot-link">Hop in now</a>
