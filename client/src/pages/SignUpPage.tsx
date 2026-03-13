@@ -8,7 +8,7 @@ function SignUpPage() {
         name: '',
         lastname: '',
         email: '',
-        phone: '',
+        phoneNumber: '',
         birthday: '',
         address: '',
         password: ''
@@ -163,7 +163,7 @@ function SignUpPage() {
                                 type="tel"
                                 name="phone"
                                 placeholder="Phone Number"
-                                value={formData.phone}
+                                value={formData.phoneNumber}
                                 onChange={handleChange}
                                 className="text-input"
                                 required

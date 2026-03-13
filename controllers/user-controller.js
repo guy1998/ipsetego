@@ -50,7 +50,7 @@ const cacheUserForConfirmation = async (userData) => {
         const otp = generateOtp();
         const emailResult = await sendOtp(sanitizedData.email, otp);
         if (emailResult) {
-            storeData(otp, { ...sanitizedData, personalSlug, publicId });
+            storeData(otp, { ...sanitizedData, personalSlug, publicId, role: 'user' });
             return dataLessResponse(200, "Email sent waiting for confirmation!")
         } else {
             return dataLessResponse(400, "Email couldn't be sent! Please check the email address!")

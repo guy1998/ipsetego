@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import { useTheme } from '@/hooks/use-theme';
 import { Moon, Sun, Home, Calendar, MapPin, Award } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -199,29 +198,18 @@ const PublicExperiencePage = () => {
         {/* Skills Section */}
         {skills.length > 0 && (
           <div className="mb-16">
-            <h2 className="text-3xl font-bold mb-8">Technical Skills</h2>
+            <h2 className="text-3xl font-bold mb-8">Skills</h2>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                {skills.map((skill, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="font-medium">{skill.name}</span>
-                      <span className="text-sm text-muted-foreground">{(skill.level || 1) * 20}%</span>
-                    </div>
-                    <Progress value={(skill.level || 1) * 20} className="h-2" />
+            <div className="space-y-4">
+              {skills.map((skill, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="font-medium">{skill.name}</span>
+                    <span className="text-sm text-muted-foreground">{(skill.level || 1) * 20}%</span>
                   </div>
-                ))}
-              </div>
-
-              <Card className="p-6">
-                <h3 className="font-semibold mb-4 text-lg">Tech Stack</h3>
-                <div className="flex flex-wrap gap-2">
-                  {skills.map((skill) => (
-                    <Badge key={skill.name} variant="secondary">{skill.name}</Badge>
-                  ))}
+                  <Progress value={(skill.level || 1) * 20} className="h-2" />
                 </div>
-              </Card>
+              ))}
             </div>
           </div>
         )}

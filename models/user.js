@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     lastname: { type: DataTypes.STRING, allowNull: false, defaultValue: 'admin' }, // Create 1st time
     phoneNumber: { type: DataTypes.STRING, allowNull: false, defaultValue: 'admin' }, // Create 1st time
     address: { type: DataTypes.STRING, allowNull: false, defaultValue: 'admin' }, // Create 1st time
-    role: { type: DataTypes.ENUM('admin', 'user'), allowNull: false, defaultValue: 'admin' }, // Create 1st time
+    role: { type: DataTypes.ENUM('admin', 'user'), allowNull: false, defaultValue: 'user' }, // Create 1st time
     birthday: { type: DataTypes.DATE, allowNull: false }, // Create 1st time
     linkedin: { type: DataTypes.STRING, allowNull: true },
     github: { type: DataTypes.STRING, allowNull: true },
