@@ -16,7 +16,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { DatePickerWithYearMonth } from '@/components/DatePickerWithYearMonth';
-import { Plus, Edit2, Trash2, Calendar, MapPin, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar, MapPin, ChevronDown, Award } from 'lucide-react';
 import { Api } from '@/api/api';
 import { useToast } from '@/hooks/use-toast';
 import { formatLocalDate } from '@/lib/utils';
@@ -39,6 +39,12 @@ interface Skill {
   category: string;
 }
 
+interface Certification {
+  id: string;
+  title: string;
+  year: string;
+}
+
 // Helper function to format date for display in cards (YYYY-MM format)
 const formatDateForDisplay = (dateStr: string): string => {
   if (!dateStr) return '';
@@ -57,6 +63,10 @@ const DashboardExperience = () => {
   const [isLoadingSkills, setIsLoadingSkills] = useState(true);
   const [isSavingSkills, setIsSavingSkills] = useState(false);
 
+  const [certifications, setCertifications] = useState<Certification[]>([]);
+  const [isLoadingCerts, setIsLoadingCerts] = useState(true);
+  const [isSavingCerts, setIsSavingCerts] = useState(false);
+
   // Experience Modal State
   const [isExpCreateOpen, setIsExpCreateOpen] = useState(false);
   const [isExpEditOpen, setIsExpEditOpen] = useState(false);
@@ -66,6 +76,15 @@ const DashboardExperience = () => {
   const [expFormData, setExpFormData] = useState<Partial<Experience>>({});
   const [isDeletingExp, setIsDeletingExp] = useState(false);
   const [expValidationError, setExpValidationError] = useState<string>('');
+
+  // Certification Modal State
+  const [isCertCreateOpen, setIsCertCreateOpen] = useState(false);
+  const [isCertEditOpen, setIsCertEditOpen] = useState(false);
+  const [isDeleteCertOpen, setIsDeleteCertOpen] = useState(false);
+  const [editingCert, setEditingCert] = useState<Certification | null>(null);
+  const [deletingCert, setDeletingCert] = useState<Certification | null>(null);
+  const [certFormData, setCertFormData] = useState<Partial<Certification>>({});
+  const [isDeletingCert, setIsDeletingCert] = useState(false);
 
   // Skill Modal State
   const [isSkillCreateOpen, setIsSkillCreateOpen] = useState(false);
@@ -134,10 +153,31 @@ const DashboardExperience = () => {
     }
   }, [api, toast]);
 
+  const fetchCertifications = useCallback(async () => {
+    setIsLoadingCerts(true);
+    try {
+      const response = await api.get('/certification/list');
+      if (response.data.data) {
+        const formatted: Certification[] = response.data.data.map((cert: any) => ({
+          id: cert.id.toString(),
+          title: cert.title,
+          year: cert.year,
+        }));
+        setCertifications(formatted);
+      }
+    } catch (error) {
+      console.error('Error fetching certifications:', error);
+      toast({ title: 'Error', description: 'Failed to load certifications', variant: 'destructive' });
+    } finally {
+      setIsLoadingCerts(false);
+    }
+  }, [api, toast]);
+
   useEffect(() => {
     fetchExperiences();
     fetchSkills();
-  }, [fetchExperiences, fetchSkills]);
+    fetchCertifications();
+  }, [fetchExperiences, fetchSkills, fetchCertifications]);
 
   // Experience Handlers
   const handleCreateExpOpen = () => {
@@ -363,6 +403,73 @@ const DashboardExperience = () => {
     }
   };
 
+  // Certification Handlers
+  const handleCreateCertOpen = () => {
+    setEditingCert(null);
+    setCertFormData({});
+    setIsCertCreateOpen(true);
+  };
+
+  const handleEditCertOpen = (cert: Certification) => {
+    setEditingCert(cert);
+    setCertFormData(cert);
+    setIsCertEditOpen(true);
+  };
+
+  const handleSaveCert = async () => {
+    if (!certFormData.title || !certFormData.year) {
+      toast({ title: 'Validation Error', description: 'Please fill in all required fields', variant: 'destructive' });
+      return;
+    }
+
+    setIsSavingCerts(true);
+    try {
+      if (editingCert) {
+        await api.put(`/certification/update/${editingCert.id}`, certFormData);
+        toast({ title: 'Success', description: 'Certification updated successfully' });
+        setIsCertEditOpen(false);
+      } else {
+        await api.post('/certification/new-certification', certFormData);
+        toast({ title: 'Success', description: 'Certification added successfully' });
+        setIsCertCreateOpen(false);
+      }
+      await fetchCertifications();
+      setCertFormData({});
+      setEditingCert(null);
+    } catch (error) {
+      console.error('Error saving certification:', error);
+      toast({ title: 'Error', description: editingCert ? 'Failed to update certification' : 'Failed to add certification', variant: 'destructive' });
+    } finally {
+      setIsSavingCerts(false);
+    }
+  };
+
+  const handleDeleteCert = (id: string) => {
+    const cert = certifications.find(c => c.id === id);
+    if (cert) {
+      setDeletingCert(cert);
+      setIsDeleteCertOpen(true);
+    }
+  };
+
+  const confirmDeleteCert = async () => {
+    if (!deletingCert) return;
+
+    setIsDeletingCert(true);
+    try {
+      await api.delete(`/certification/${deletingCert.id}`);
+      toast({ title: 'Success', description: 'Certification deleted successfully' });
+      setIsDeleteCertOpen(false);
+      setDeletingCert(null);
+      await fetchCertifications();
+    } catch (error) {
+      console.error('Error deleting certification:', error);
+      toast({ title: 'Error', description: 'Failed to delete certification', variant: 'destructive' });
+    } finally {
+      setIsDeletingCert(false);
+    }
+  };
+
   const getLevelLabel = (level: number) => {
     const levels = ['Beginner', 'Novice', 'Intermediate', 'Advanced', 'Expert'];
     return levels[level - 1] || 'Intermediate';
@@ -399,6 +506,7 @@ const DashboardExperience = () => {
         <TabsList>
           <TabsTrigger value="experience">Work Experience</TabsTrigger>
           <TabsTrigger value="skills">Skills</TabsTrigger>
+          <TabsTrigger value="certifications">Certifications</TabsTrigger>
         </TabsList>
 
         {/* Experience Tab */}
@@ -1141,6 +1249,174 @@ const DashboardExperience = () => {
                   disabled={isSavingSkills}
                 >
                   {isSavingSkills ? 'Deleting...' : 'Delete'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        {/* Certifications Tab */}
+        <TabsContent value="certifications" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Certifications</h2>
+            <Dialog open={isCertCreateOpen} onOpenChange={setIsCertCreateOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={handleCreateCertOpen} className="gap-2" disabled={isSavingCerts}>
+                  <Plus className="w-4 h-4" />
+                  Add Certification
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add Certification</DialogTitle>
+                  <DialogDescription>Add a new certification to your profile</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="cert-title">Certification Title *</Label>
+                    <Input
+                      id="cert-title"
+                      placeholder="e.g., AWS Certified Developer"
+                      value={certFormData.title || ''}
+                      onChange={(e) => setCertFormData({ ...certFormData, title: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cert-year">Year of Achievement *</Label>
+                    <Input
+                      id="cert-year"
+                      placeholder="e.g., 2024"
+                      value={certFormData.year || ''}
+                      onChange={(e) => setCertFormData({ ...certFormData, year: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-3 justify-end">
+                  <Button variant="outline" onClick={() => setIsCertCreateOpen(false)} disabled={isSavingCerts}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveCert} disabled={isSavingCerts}>
+                    {isSavingCerts ? 'Saving...' : 'Add Certification'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Certifications List */}
+          <div className="space-y-4">
+            {isLoadingCerts ? (
+              <Card className="p-12 border-border/20 text-center">
+                <p className="text-muted-foreground">Loading certifications...</p>
+              </Card>
+            ) : certifications.length === 0 ? (
+              <Card className="p-12 border-border/20 text-center">
+                <p className="text-muted-foreground mb-4">No certifications yet</p>
+                <Button onClick={handleCreateCertOpen}>Add Your First Certification</Button>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {certifications.map((cert) => (
+                  <Card key={cert.id} className="p-4 border-border/20">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3 flex-1">
+                        <Award className="w-5 h-5 text-primary shrink-0" />
+                        <div>
+                          <h3 className="font-bold">{cert.title}</h3>
+                          <p className="text-sm text-muted-foreground">{cert.year}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleEditCertOpen(cert)}
+                        disabled={isSavingCerts}
+                      >
+                        <Edit2 className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteCert(cert.id)}
+                        disabled={isSavingCerts}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Edit Certification Modal */}
+          <Dialog open={isCertEditOpen} onOpenChange={setIsCertEditOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Certification</DialogTitle>
+                <DialogDescription>Update your certification details</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-cert-title">Certification Title *</Label>
+                  <Input
+                    id="edit-cert-title"
+                    placeholder="e.g., AWS Certified Developer"
+                    value={certFormData.title || ''}
+                    onChange={(e) => setCertFormData({ ...certFormData, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-cert-year">Year of Achievement *</Label>
+                  <Input
+                    id="edit-cert-year"
+                    placeholder="e.g., 2024"
+                    value={certFormData.year || ''}
+                    onChange={(e) => setCertFormData({ ...certFormData, year: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <Button variant="outline" onClick={() => setIsCertEditOpen(false)} disabled={isSavingCerts}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveCert} disabled={isSavingCerts}>
+                  {isSavingCerts ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Certification Confirmation Dialog */}
+          <Dialog open={isDeleteCertOpen} onOpenChange={setIsDeleteCertOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Delete Certification</DialogTitle>
+                <DialogDescription>
+                  This action cannot be undone. This will permanently delete the certification.
+                </DialogDescription>
+              </DialogHeader>
+              {deletingCert && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+                  <p className="font-semibold text-destructive">{deletingCert.title}</p>
+                  <p className="text-sm text-muted-foreground">{deletingCert.year}</p>
+                </div>
+              )}
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => { setIsDeleteCertOpen(false); setDeletingCert(null); }}
+                  disabled={isDeletingCert}
+                >
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={confirmDeleteCert} disabled={isDeletingCert}>
+                  {isDeletingCert ? 'Deleting...' : 'Delete'}
                 </Button>
               </div>
             </DialogContent>

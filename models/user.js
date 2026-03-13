@@ -49,6 +49,11 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: 'CASCADE',
       hooks: true
     });
+    User.hasMany(models.Certification, {
+      foreignKey: 'userId',
+      onDelete: 'CASCADE',
+      hooks: true
+    });
   };
 
   User.addHook('beforeDestroy', async (user, options) => {

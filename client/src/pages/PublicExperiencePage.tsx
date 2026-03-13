@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useTheme } from '@/hooks/use-theme';
-import { Moon, Sun, Home, Calendar, MapPin } from 'lucide-react';
+import { Moon, Sun, Home, Calendar, MapPin, Award } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Api } from '@/api/api';
 import { BACKEND_URL } from '@/lib/constants';
@@ -25,6 +25,12 @@ interface Experience {
   endDate?: string;
   isCurrentlyWorking: boolean;
   location?: string;
+}
+
+interface Certification {
+  id: number;
+  title: string;
+  year: string;
 }
 
 const extractPublicId = (slug: string): string | null => {
@@ -49,6 +55,7 @@ const PublicExperiencePage = () => {
 
   const [user, setUser] = useState<UserPublicInfo | null>(null);
   const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [certifications, setCertifications] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,12 +65,14 @@ const PublicExperiencePage = () => {
 
     const fetchData = async () => {
       try {
-        const [userRes, expRes] = await Promise.all([
+        const [userRes, expRes, certRes] = await Promise.all([
           api.get(`/user/public/${publicId}`),
           api.get(`/experience/list-public/${publicId}`),
+          api.get(`/certification/list-public/${publicId}`),
         ]);
         setUser(userRes.data.data);
         setExperiences(expRes.data.data || []);
+        setCertifications(certRes.data.data || []);
       } catch {
         // fetch failed
       } finally {
@@ -165,6 +174,28 @@ const PublicExperiencePage = () => {
           </div>
         )}
 
+        {/* Certifications Section */}
+        {certifications.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-3xl font-bold mb-8">Certifications</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {certifications.map((cert) => (
+                <Card key={cert.id} className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Award className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg leading-tight">{cert.title}</h3>
+                      <p className="text-muted-foreground mt-1">{cert.year}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Skills Section */}
         {skills.length > 0 && (
           <div className="mb-16">
@@ -195,7 +226,7 @@ const PublicExperiencePage = () => {
           </div>
         )}
 
-        {experiences.length === 0 && skills.length === 0 && (
+        {experiences.length === 0 && skills.length === 0 && certifications.length === 0 && (
           <div className="text-center py-16">
             <p className="text-muted-foreground">No experience or skills have been added yet.</p>
           </div>
