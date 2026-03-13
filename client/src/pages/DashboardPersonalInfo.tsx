@@ -42,6 +42,10 @@ interface SocialLinks {
   linkedin: string;
   github: string;
   xing: string;
+  twitter: string;
+  instagram: string;
+  youtube: string;
+  tiktok: string;
 }
 
 const DashboardPersonalInfo = () => {
@@ -84,6 +88,10 @@ const DashboardPersonalInfo = () => {
     linkedin: '',
     github: '',
     xing: '',
+    twitter: '',
+    instagram: '',
+    youtube: '',
+    tiktok: '',
   });
   const [isEditingSocial, setIsEditingSocial] = useState(false);
   const [isSavingSocial, setIsSavingSocial] = useState(false);
@@ -115,6 +123,10 @@ const DashboardPersonalInfo = () => {
           linkedin: user.linkedin || '',
           github: user.github || '',
           xing: user.xing || '',
+          twitter: user.twitter || '',
+          instagram: user.instagram || '',
+          youtube: user.youtube || '',
+          tiktok: user.tiktok || '',
         });
         
         // Handle languages (now JSON with level)
@@ -404,6 +416,10 @@ const DashboardPersonalInfo = () => {
         linkedin: socialLinks.linkedin,
         github: socialLinks.github,
         xing: socialLinks.xing,
+        twitter: socialLinks.twitter,
+        instagram: socialLinks.instagram,
+        youtube: socialLinks.youtube,
+        tiktok: socialLinks.tiktok,
       });
       if (response.status === 200) {
         toast({
@@ -926,6 +942,56 @@ const DashboardPersonalInfo = () => {
               />
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="twitter">Twitter / X URL</Label>
+                <Input
+                  id="twitter"
+                  value={socialLinks.twitter}
+                  onChange={(e) =>
+                    setSocialLinks({ ...socialLinks, twitter: e.target.value })
+                  }
+                  placeholder="https://x.com/yourhandle"
+                />
+              </div>
+              <div>
+                <Label htmlFor="instagram">Instagram URL</Label>
+                <Input
+                  id="instagram"
+                  value={socialLinks.instagram}
+                  onChange={(e) =>
+                    setSocialLinks({ ...socialLinks, instagram: e.target.value })
+                  }
+                  placeholder="https://instagram.com/yourprofile"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="youtube">YouTube URL</Label>
+                <Input
+                  id="youtube"
+                  value={socialLinks.youtube}
+                  onChange={(e) =>
+                    setSocialLinks({ ...socialLinks, youtube: e.target.value })
+                  }
+                  placeholder="https://youtube.com/@yourchannel"
+                />
+              </div>
+              <div>
+                <Label htmlFor="tiktok">TikTok URL</Label>
+                <Input
+                  id="tiktok"
+                  value={socialLinks.tiktok}
+                  onChange={(e) =>
+                    setSocialLinks({ ...socialLinks, tiktok: e.target.value })
+                  }
+                  placeholder="https://tiktok.com/@yourhandle"
+                />
+              </div>
+            </div>
+
             <div className="flex gap-2 pt-4">
               <Button
                 onClick={handleSaveSocialLinks}
@@ -977,7 +1043,7 @@ const DashboardPersonalInfo = () => {
                 )}
               </span>
             </div>
-            <div className="flex justify-between items-center py-2">
+            <div className="flex justify-between items-center py-2 border-b border-border/20">
               <span className="text-muted-foreground">Xing</span>
               <span className="font-medium text-sm break-all">
                 {socialLinks.xing ? (
@@ -992,6 +1058,46 @@ const DashboardPersonalInfo = () => {
                 ) : (
                   '—'
                 )}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-border/20">
+              <span className="text-muted-foreground">Twitter / X</span>
+              <span className="font-medium text-sm break-all">
+                {socialLinks.twitter ? (
+                  <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {socialLinks.twitter}
+                  </a>
+                ) : '—'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-border/20">
+              <span className="text-muted-foreground">Instagram</span>
+              <span className="font-medium text-sm break-all">
+                {socialLinks.instagram ? (
+                  <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {socialLinks.instagram}
+                  </a>
+                ) : '—'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-border/20">
+              <span className="text-muted-foreground">YouTube</span>
+              <span className="font-medium text-sm break-all">
+                {socialLinks.youtube ? (
+                  <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {socialLinks.youtube}
+                  </a>
+                ) : '—'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-muted-foreground">TikTok</span>
+              <span className="font-medium text-sm break-all">
+                {socialLinks.tiktok ? (
+                  <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {socialLinks.tiktok}
+                  </a>
+                ) : '—'}
               </span>
             </div>
           </div>

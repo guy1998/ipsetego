@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useTheme } from '@/hooks/use-theme';
-import { Github, Linkedin, FileText, Moon, Sun, Mail, Briefcase, ArrowUp, ExternalLink, Download, Send } from 'lucide-react';
+import { Github, Linkedin, FileText, Moon, Sun, Mail, Briefcase, ArrowUp, ExternalLink, Download, Send, Twitter, Instagram, Youtube } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Api } from '@/api/api';
 import { BACKEND_URL } from '@/lib/constants';
@@ -34,6 +34,10 @@ interface UserPublicInfo {
   linkedin?: string;
   github?: string;
   xing?: string;
+  twitter?: string;
+  instagram?: string;
+  youtube?: string;
+  tiktok?: string;
   skills?: { name: string; category?: string; level?: number }[];
 }
 
@@ -270,32 +274,68 @@ const PublicPortfolioPage = () => {
               </div>
 
               {/* Social Links */}
-              <div className="flex justify-center gap-3 flex-wrap">
+              <div className="flex justify-center gap-2 flex-wrap">
                 {user?.github && (
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={user.github} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm" asChild title="GitHub">
+                    <a href={user.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
                       <Github className="w-4 h-4" />
+                      {messages.length === 0 && <span className="text-xs">GitHub</span>}
                     </a>
                   </Button>
                 )}
                 {user?.linkedin && (
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={user.linkedin} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm" asChild title="LinkedIn">
+                    <a href={user.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
                       <Linkedin className="w-4 h-4" />
+                      {messages.length === 0 && <span className="text-xs">LinkedIn</span>}
                     </a>
                   </Button>
                 )}
                 {user?.xing && (
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={user.xing} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm" asChild title="Xing">
+                    <a href={user.xing} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
                       <ExternalLink className="w-4 h-4" />
+                      {messages.length === 0 && <span className="text-xs">Xing</span>}
+                    </a>
+                  </Button>
+                )}
+                {user?.twitter && (
+                  <Button variant="outline" size="sm" asChild title="Twitter / X">
+                    <a href={user.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
+                      <Twitter className="w-4 h-4" />
+                      {messages.length === 0 && <span className="text-xs">Twitter</span>}
+                    </a>
+                  </Button>
+                )}
+                {user?.instagram && (
+                  <Button variant="outline" size="sm" asChild title="Instagram">
+                    <a href={user.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
+                      <Instagram className="w-4 h-4" />
+                      {messages.length === 0 && <span className="text-xs">Instagram</span>}
+                    </a>
+                  </Button>
+                )}
+                {user?.youtube && (
+                  <Button variant="outline" size="sm" asChild title="YouTube">
+                    <a href={user.youtube} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
+                      <Youtube className="w-4 h-4" />
+                      {messages.length === 0 && <span className="text-xs">YouTube</span>}
+                    </a>
+                  </Button>
+                )}
+                {user?.tiktok && (
+                  <Button variant="outline" size="sm" asChild title="TikTok">
+                    <a href={user.tiktok} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
+                      <ExternalLink className="w-4 h-4" />
+                      {messages.length === 0 && <span className="text-xs">TikTok</span>}
                     </a>
                   </Button>
                 )}
                 {user?.email && (
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={`mailto:${user.email}`}>
+                  <Button variant="outline" size="sm" asChild title="Email">
+                    <a href={`mailto:${user.email}`} className="flex items-center gap-1.5">
                       <Mail className="w-4 h-4" />
+                      {messages.length === 0 && <span className="text-xs">Email</span>}
                     </a>
                   </Button>
                 )}

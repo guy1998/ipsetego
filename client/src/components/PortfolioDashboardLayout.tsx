@@ -30,8 +30,9 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
         setUserName(name);
         const initials = `${(user.name || '').charAt(0)}${(user.lastname || '').charAt(0)}`.toUpperCase();
         setUserInitials(initials || 'U');
-        if (user.personalSlug) setPersonalSlug(user.personalSlug);
-        if (user.pictureId) setPictureId(user.pictureId);
+        if (user.personalSlug) {
+          setPersonalSlug(user.personalSlug);
+        }
       }
     }).catch(() => {});
   }, []);
@@ -128,7 +129,8 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
             variant="outline"
             size="sm"
             className="w-full justify-start"
-            onClick={() => personalSlug ? navigate(`/portfolio/${personalSlug}`) : navigate('/preview')}
+            onClick={() => personalSlug ? window.open(`/portfolio/${personalSlug}`, "_blank") : navigate('/preview')}
+
           >
             <Eye className="w-4 h-4 mr-2" />
             Preview Portfolio
@@ -169,17 +171,9 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1">
-                {pictureId ? (
-                  <img
-                    src={`${BACKEND_URL}/uploads/image/${pictureId}`}
-                    alt="Profile"
-                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">{userInitials}</span>
-                  </div>
-                )}
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">{userInitials}</span>
+                </div>
                 <span className="font-semibold ml-2">{userName}</span>
               </div>
               <div className="flex items-center space-x-2">

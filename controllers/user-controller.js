@@ -140,7 +140,7 @@ const getUserByPublicId = async (publicId) => {
     try {
         const user = await User.findOne({
             where: { publicId },
-            attributes: ['name', 'lastname', 'email', 'personalSlug', 'publicId', 'pictureId', 'resumeId', 'linkedin', 'github', 'xing', 'skills', 'languages', 'hobbies']
+            attributes: ['name', 'lastname', 'email', 'personalSlug', 'publicId', 'pictureId', 'resumeId', 'linkedin', 'github', 'xing', 'twitter', 'instagram', 'youtube', 'tiktok', 'skills', 'languages', 'hobbies']
         });
         if (!user) {
             return dataLessResponse(404, "Portfolio not found!");
