@@ -6,12 +6,14 @@ import { useNavigate } from 'react-router-dom';
 import { Briefcase, Award, Eye, Plus, Settings } from 'lucide-react';
 import CVUploader from '@/components/CVUploader';
 import { Api } from '@/api/api';
+import { BACKEND_URL } from '@/lib/constants';
 
 const DashboardHome = () => {
   const navigate = useNavigate();
   const api = Api.getInstance();
 
   const [userName, setUserName] = useState('');
+  const [pictureId, setPictureId] = useState<string | undefined>(undefined);
   const [projectsCount, setProjectsCount] = useState(0);
   const [experienceCount, setExperienceCount] = useState(0);
   const [skillsCount, setSkillsCount] = useState(0);
@@ -33,6 +35,7 @@ const DashboardHome = () => {
 
         const name = `${user.name || ''} ${user.lastname || ''}`.trim();
         setUserName(name);
+        if (user.pictureId) setPictureId(user.pictureId);
         setProjectsCount(projects.length);
         setExperienceCount(experiences.length);
 
@@ -61,11 +64,26 @@ const DashboardHome = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold">Welcome back{userName ? `, ${userName.split(' ')[0]}` : ''}</h1>
-        <p className="text-muted-foreground text-lg">
-          Manage your portfolio, projects, and experience in one place.
-        </p>
+      <div className="flex items-center gap-4">
+        {pictureId ? (
+          <img
+            src={`${BACKEND_URL}/uploads/image/${pictureId}`}
+            alt="Profile"
+            className="w-16 h-16 rounded-full object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-xl font-bold text-primary">
+              {userName ? userName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : '?'}
+            </span>
+          </div>
+        )}
+        <div className="space-y-1">
+          <h1 className="text-4xl font-bold">Welcome back{userName ? `, ${userName.split(' ')[0]}` : ''}</h1>
+          <p className="text-muted-foreground text-lg">
+            Manage your portfolio, projects, and experience in one place.
+          </p>
+        </div>
       </div>
 
       {/* Quick Stats */}

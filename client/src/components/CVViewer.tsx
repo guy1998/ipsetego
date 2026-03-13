@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -13,6 +14,7 @@ interface CVViewerProps {
 
 const CVViewer: React.FC<CVViewerProps> = ({ isOpen, onClose }) => {
   const [activeSection, setActiveSection] = useState('overview');
+  const { toast } = useToast();
 
   const skills = [
     { name: 'React/Next.js', level: 95 },
@@ -30,8 +32,7 @@ const CVViewer: React.FC<CVViewerProps> = ({ isOpen, onClose }) => {
   ];
 
   const handleDownloadCV = () => {
-    // In a real app, this would trigger a PDF download
-    alert('CV download started! (This is a demo)');
+    toast({ title: "CV Download", description: "CV download started! (This is a demo)" });
   };
 
   return (

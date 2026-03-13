@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ interface CVUploaderProps {
 
 const CVUploader = ({ resumeId, onUploadSuccess }: CVUploaderProps) => {
   const api = Api.getInstance();
+  const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -44,7 +46,7 @@ const CVUploader = ({ resumeId, onUploadSuccess }: CVUploaderProps) => {
 
   const uploadFile = async (file: File) => {
     if (file.type !== 'application/pdf' && !file.type.startsWith('image/')) {
-      alert('Please upload a PDF or image file');
+      toast({ title: "Error!", description: "Please upload a PDF or image file." });
       return;
     }
 
@@ -61,7 +63,7 @@ const CVUploader = ({ resumeId, onUploadSuccess }: CVUploaderProps) => {
       }
     } catch (error) {
       console.error('CV upload failed:', error);
-      alert('Failed to upload CV. Please try again.');
+      toast({ title: "Error!", description: "Failed to upload CV. Please try again." });
     } finally {
       setIsUploading(false);
     }
@@ -90,7 +92,7 @@ const CVUploader = ({ resumeId, onUploadSuccess }: CVUploaderProps) => {
       setIsPreviewOpen(true);
     } catch (error) {
       console.error('Failed to load CV preview:', error);
-      alert('Failed to load CV preview.');
+      toast({ title: "Error!", description: "Failed to load CV preview." });
     }
   };
 

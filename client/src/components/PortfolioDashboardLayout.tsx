@@ -5,6 +5,7 @@ import { Moon, Sun, Eye, Home, Briefcase, Award, LogOut, User } from 'lucide-rea
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Api } from '@/api/api';
 import { useToast } from '@/hooks/use-toast';
+import { BACKEND_URL } from '@/lib/constants';
 
 interface PortfolioDashboardLayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
   const [userName, setUserName] = useState('');
   const [userInitials, setUserInitials] = useState('');
   const [personalSlug, setPersonalSlug] = useState('');
+  const [pictureId, setPictureId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     api.get('/user/profile').then((response) => {
@@ -28,9 +30,8 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
         setUserName(name);
         const initials = `${(user.name || '').charAt(0)}${(user.lastname || '').charAt(0)}`.toUpperCase();
         setUserInitials(initials || 'U');
-        if (user.personalSlug) {
-          setPersonalSlug(user.personalSlug);
-        }
+        if (user.personalSlug) setPersonalSlug(user.personalSlug);
+        if (user.pictureId) setPictureId(user.pictureId);
       }
     }).catch(() => {});
   }, []);
@@ -168,9 +169,17 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">{userInitials}</span>
-                </div>
+                {pictureId ? (
+                  <img
+                    src={`${BACKEND_URL}/uploads/image/${pictureId}`}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">{userInitials}</span>
+                  </div>
+                )}
                 <span className="font-semibold ml-2">{userName}</span>
               </div>
               <div className="flex items-center space-x-2">

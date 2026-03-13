@@ -84,9 +84,9 @@ function SignUpPage() {
 
         setIsLoading(true);
 
-        api.post('/auth/register', formData).then(response => {
+        try {
+            const response = await api.post('/auth/register', formData);
             if (response.status === 200) {
-                setIsLoading(false);
                 setShowOtp(true);
             } else {
                 toast({
@@ -94,7 +94,14 @@ function SignUpPage() {
                     description: response.data.message,
                 });
             }
-        });
+        } catch (error) {
+            toast({
+                title: "Error!",
+                description: error.response?.data?.message || "Sign up failed. Please try again.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     if (showOtp) {
@@ -294,9 +301,9 @@ function OtpPage({ email }) {
 
         setIsLoading(true);
 
-        api.post('/auth/confirm', { otp: otp.join('') }).then(response => {
+        try {
+            const response = await api.post('/auth/confirm', { otp: otp.join('') });
             if (response.status === 200) {
-                setIsLoading(false);
                 setIsVerified(true);
             } else {
                 toast({
@@ -304,14 +311,23 @@ function OtpPage({ email }) {
                     description: response.data.message,
                 });
             }
-        })
+        } catch (error) {
+            toast({
+                title: "Error!",
+                description: error.response?.data?.message || "Verification failed. Please try again.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
 
     };
 
     const handleResendOtp = () => {
-        // Simulate resend OTP
         setOtp(['', '', '', '', '', '']);
-        alert('New OTP has been sent to your email!');
+        toast({
+            title: "OTP Sent!",
+            description: "A new OTP has been sent to your email.",
+        });
     };
 
     if (isVerified) {

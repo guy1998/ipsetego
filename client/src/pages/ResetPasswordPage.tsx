@@ -1,23 +1,24 @@
 import "../assets/styles/LoginPage.css";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
-    // Basic validation
+
     if (password !== confirmPassword) {
-      alert('Passwords do not match!');
+      toast({ title: "Error!", description: "Passwords do not match!" });
       return;
     }
-    
+
     if (password.length < 6) {
-      alert('Password needs to be at least six characters long!');
+      toast({ title: "Error!", description: "Password needs to be at least six characters long!" });
       return;
     }
     
