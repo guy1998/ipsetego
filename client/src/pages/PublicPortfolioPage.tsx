@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useTheme } from '@/hooks/use-theme';
-import { Github, Linkedin, FileText, Moon, Sun, Mail, Briefcase, ArrowUp, ExternalLink, Download } from 'lucide-react';
+import { Github, Linkedin, FileText, Moon, Sun, Mail, Briefcase, ArrowUp, ExternalLink, Download, Send } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Api } from '@/api/api';
 import { BACKEND_URL } from '@/lib/constants';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -58,6 +60,10 @@ const PublicPortfolioPage = () => {
 
   const [isCvPreviewOpen, setIsCvPreviewOpen] = useState(false);
   const [cvBlobUrl, setCvBlobUrl] = useState<string | null>(null);
+
+  const [isContactOpen, setIsContactOpen] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: '', surname: '', email: '', subject: '', content: '' });
+  const [contactSending, setContactSending] = useState(false);
 
   useEffect(() => {
     if (!personalSlug) return;
@@ -143,6 +149,22 @@ const PublicPortfolioPage = () => {
       URL.revokeObjectURL(url);
     } catch {
       // download failed
+    }
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.publicId) return;
+    setContactSending(true);
+    try {
+      await api.post(`/user/contact/${user.publicId}`, contactForm);
+      toast.success('Message sent!', { description: 'Your message has been delivered.' });
+      setIsContactOpen(false);
+      setContactForm({ name: '', surname: '', email: '', subject: '', content: '' });
+    } catch {
+      toast.error('Failed to send message', { description: 'Please try again later.' });
+    } finally {
+      setContactSending(false);
     }
   };
 
@@ -280,20 +302,32 @@ const PublicPortfolioPage = () => {
               </div>
 
               {/* Action Buttons */}
-              {messages.length === 0 && (
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  {user?.resumeId && (
-                    <Button onClick={loadCvPreview} className="bg-primary hover:bg-primary/90">
-                      <FileText className="w-4 h-4 mr-2" />
-                      View CV
-                    </Button>
-                  )}
+              <div className={`flex gap-2 justify-center ${messages.length === 0 ? 'flex-col sm:flex-row' : 'flex-row flex-wrap'}`}>
+                {user?.resumeId && (
+                  <Button
+                    onClick={loadCvPreview}
+                    className="bg-primary hover:bg-primary/90"
+                    size={messages.length === 0 ? 'default' : 'sm'}
+                  >
+                    <FileText className="w-4 h-4" />
+                    {messages.length === 0 && <span className="ml-2">View CV</span>}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => setIsContactOpen(true)}
+                  size={messages.length === 0 ? 'default' : 'sm'}
+                >
+                  <Send className="w-4 h-4" />
+                  {messages.length === 0 && <span className="ml-2">Contact</span>}
+                </Button>
+                {messages.length === 0 && (
                   <Button variant="outline" onClick={() => navigate(`/portfolio/${personalSlug}/projects`)}>
                     <Briefcase className="w-4 h-4 mr-2" />
                     View Projects
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Subtitle */}
               <p className="text-sm text-muted-foreground">
@@ -375,6 +409,75 @@ const PublicPortfolioPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Contact Modal */}
+      <Dialog open={isContactOpen} onOpenChange={setIsContactOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Contact {fullName}</DialogTitle>
+            <DialogDescription>Send a message directly to {user?.name}.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleContactSubmit} className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-foreground">First Name</label>
+                <Input
+                  placeholder="Your first name"
+                  value={contactForm.name}
+                  onChange={e => setContactForm(f => ({ ...f, name: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-foreground">Last Name</label>
+                <Input
+                  placeholder="Your last name"
+                  value={contactForm.surname}
+                  onChange={e => setContactForm(f => ({ ...f, surname: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">Email</label>
+              <Input
+                type="email"
+                placeholder="your@email.com"
+                value={contactForm.email}
+                onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">Subject</label>
+              <Input
+                placeholder="What is this about?"
+                value={contactForm.subject}
+                onChange={e => setContactForm(f => ({ ...f, subject: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">Message</label>
+              <Textarea
+                placeholder="Write your message here..."
+                value={contactForm.content}
+                onChange={e => setContactForm(f => ({ ...f, content: e.target.value }))}
+                rows={5}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={contactSending}>
+              {contactSending ? 'Sending...' : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Send Message
+                </>
+              )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* CV Preview Modal */}
       <Dialog open={isCvPreviewOpen} onOpenChange={setIsCvPreviewOpen}>

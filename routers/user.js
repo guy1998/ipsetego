@@ -65,6 +65,12 @@ app.get('/public/:publicId', async (req, res) => {
     res.status(status).json(data);
 });
 
+app.post('/contact/:publicId', async (req, res) => {
+    const { name, surname, email, subject, content } = req.body;
+    const { status, data } = await userModule.contactUser(req.params.publicId, name, surname, email, subject, content);
+    res.status(status).json(data);
+});
+
 //TODO: remove this when hosting online
 app.post('/create-dev', async (req, res) => {
     const { status, data } = await userModule.createUser(req.body);

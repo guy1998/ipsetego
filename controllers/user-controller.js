@@ -3,7 +3,7 @@ const cache = new NodeCache({ stdTTL: 600 }); // Using 10 minutes as default ttl
 const { internalServerError, dataLessResponse, responseWithData } = require('../common/reused-responses');
 const { User } = require('../models');
 const { retrieveId } = require('../utils/jwt');
-const { sendOtp } = require('../utils/mailer');
+const { sendOtp, sendContactEmail } = require('../utils/mailer');
 const { generateOtp, sanitizeInput, passwordVerifier, passwordHasher } = require('../utils/security');
 const { uploadFile, deleteFile } = require('../utils/supabase');
 let uuidv4;
@@ -240,6 +240,22 @@ const uploadCV = async (userId, fileBuffer, fileName) => {
     }
 };
 
+const contactUser = async (publicId, fromName, fromSurname, fromEmail, subject, content) => {
+    try {
+        const user = await User.findOne({ where: { publicId }, attributes: ['email'] });
+        if (!user) {
+            return dataLessResponse(404, "Portfolio not found!");
+        }
+        const sent = await sendContactEmail(user.email, fromName, fromSurname, fromEmail, subject, content);
+        if (!sent) {
+            return dataLessResponse(500, "Failed to send message. Please try again later.");
+        }
+        return dataLessResponse(200, "Message sent successfully!");
+    } catch (error) {
+        return internalServerError();
+    }
+};
+
 module.exports = {
     createUser,
     editPassword,
@@ -252,5 +268,6 @@ module.exports = {
     uploadProfilePicture,
     uploadCV,
     cacheUserForConfirmation,
-    retrieveCache
+    retrieveCache,
+    contactUser
 }
