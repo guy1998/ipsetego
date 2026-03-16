@@ -30,6 +30,7 @@ interface Experience {
   endDate: string;
   isCurrentlyWorking: boolean;
   description: string;
+  isFeatured: boolean;
 }
 
 interface Skill {
@@ -109,6 +110,7 @@ const DashboardExperience = () => {
           endDate: exp.endDate || '',
           isCurrentlyWorking: exp.isCurrentlyWorking || false,
           description: exp.description || '',
+          isFeatured: exp.isFeatured || false,
         }));
         setExperiences(formattedExperiences);
       }
@@ -181,7 +183,7 @@ const DashboardExperience = () => {
 
   // Experience Handlers
   const handleCreateExpOpen = () => {
-    setExpFormData({ isCurrentlyWorking: false });
+    setExpFormData({ isCurrentlyWorking: false, isFeatured: false });
     setExpValidationError('');
     setIsExpCreateOpen(true);
   };
@@ -226,6 +228,7 @@ const DashboardExperience = () => {
         startDate: expFormData.startDate,
         endDate: expFormData.isCurrentlyWorking ? null : (expFormData.endDate || ''),
         isCurrentlyWorking: expFormData.isCurrentlyWorking || false,
+        isFeatured: expFormData.isFeatured || false,
       };
 
       if (editingExp) {
@@ -666,6 +669,20 @@ const DashboardExperience = () => {
                     />
                     <Label htmlFor="exp-current">Currently Working Here</Label>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="exp-featured"
+                      type="checkbox"
+                      checked={expFormData.isFeatured || false}
+                      onChange={(e) =>
+                        setExpFormData({
+                          ...expFormData,
+                          isFeatured: e.target.checked,
+                        })
+                      }
+                    />
+                    <Label htmlFor="exp-featured">Feature on public portfolio</Label>
+                  </div>
                   {expValidationError && (
                     <div className="bg-destructive/10 border border-destructive/50 text-destructive px-3 py-2 rounded-md text-sm">
                       {expValidationError}
@@ -727,11 +744,18 @@ const DashboardExperience = () => {
                       <h3 className="text-xl font-bold">{exp.title}</h3>
                       <p className="text-muted-foreground">{exp.company}</p>
                     </div>
-                    {exp.isCurrentlyWorking && (
-                      <Badge className="bg-green-500/10 text-green-700 dark:text-green-400">
-                        Current
-                      </Badge>
-                    )}
+                    <div className="flex gap-2">
+                      {exp.isFeatured && (
+                        <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                          Featured
+                        </Badge>
+                      )}
+                      {exp.isCurrentlyWorking && (
+                        <Badge className="bg-green-500/10 text-green-700 dark:text-green-400">
+                          Current
+                        </Badge>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
@@ -921,6 +945,20 @@ const DashboardExperience = () => {
                   <Label htmlFor="edit-exp-current">
                     Currently Working Here
                   </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="edit-exp-featured"
+                    type="checkbox"
+                    checked={expFormData.isFeatured || false}
+                    onChange={(e) =>
+                      setExpFormData({
+                        ...expFormData,
+                        isFeatured: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="edit-exp-featured">Feature on public portfolio</Label>
                 </div>
                 {expValidationError && (
                   <div className="bg-destructive/10 border border-destructive/50 text-destructive px-3 py-2 rounded-md text-sm">

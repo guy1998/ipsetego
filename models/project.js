@@ -6,7 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     technologies: { type: DataTypes.JSON, allowNull: true }, // Optional array of technologies
     relatedLink: { type: DataTypes.STRING, allowNull: true },
     imageId: { type: DataTypes.STRING, allowNull: true },
-    year: { type: DataTypes.STRING, allowNull: true }
+    year: { type: DataTypes.STRING, allowNull: true },
+    isFeatured: { type: DataTypes.BOOLEAN, defaultValue: false }
   });
 
   Project.associate = (models) => {
@@ -15,7 +16,10 @@ module.exports = (sequelize, DataTypes) => {
 
   Project.addHook('beforeDestroy', async (project, options) => {
     try {
-      //TODO: Add logic to delete files
+      if (project.imageId) {
+        const { deleteFile } = require('../utils/supabase');
+        await deleteFile(process.env.SUPABASE_BUCKET_NAME, project.imageId);
+      }
     } catch(error) {
       console.log(`Error deleting the files of this project: ${error.message}`);
     }

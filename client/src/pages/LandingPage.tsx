@@ -1,14 +1,13 @@
 import React, { useRef, useState, Suspense, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Api } from '@/api/api';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, Float, MeshDistortMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useTheme } from '@/hooks/use-theme';
 import { useNavigate } from 'react-router-dom';
 import {
-  Moon,
-  Sun,
   ArrowRight,
   Zap,
   Users,
@@ -186,16 +185,20 @@ function ScanlineOverlay() {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const LandingPage = () => {
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubscribed(true);
-    setEmail('');
-    setTimeout(() => setSubscribed(false), 3000);
+    try {
+      await Api.getInstance().post('/newsletter/subscribe', { email });
+      setEmail('');
+      toast({ title: 'Subscribed!', description: 'Thanks for subscribing! Check your email.' });
+    } catch (error: any) {
+      const msg = error?.response?.data?.message ?? 'Something went wrong. Please try again.';
+      toast({ title: 'Error', description: msg, variant: 'destructive' });
+    }
   };
 
   const features = [
@@ -301,9 +304,6 @@ const LandingPage = () => {
 
             {/* Actions */}
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm" onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -432,7 +432,7 @@ const LandingPage = () => {
 
             {/* Trust Badges */}
             <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-6 text-sm" style={{ color: 'rgba(180,160,210,0.6)' }}>
-              {['No credit card required', 'Takes 5 minutes to set up', 'Join 1000+ developers'].map((text) => (
+              {['No credit card required', 'Takes 5 minutes to set up', 'Join a community of futurists'].map((text) => (
                 <div key={text} className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4" style={{ color: '#9c29fb' }} />
                   <span>{text}</span>
@@ -705,11 +705,6 @@ const LandingPage = () => {
             </Button>
           </form>
 
-          {subscribed && (
-            <p className="text-sm animate-fade-in" style={{ color: '#b06bff' }}>
-              Thanks for subscribing! Check your email.
-            </p>
-          )}
         </div>
       </section>
 

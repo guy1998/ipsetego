@@ -29,6 +29,7 @@ interface Project {
   githubUrl?: string;
   imageId?: string;
   year?: string;
+  isFeatured?: boolean;
 }
 
 const DashboardProjects = () => {
@@ -168,6 +169,7 @@ const DashboardProjects = () => {
           technologies: formData.technologies,
           relatedLink: formData.relatedLink,
           year: formData.year,
+          isFeatured: formData.isFeatured || false,
         };
 
         await api.put(`/project/update/${editingProject.id}`, updateData);
@@ -189,6 +191,7 @@ const DashboardProjects = () => {
           technologies: formData.technologies || [],
           relatedLink: formData.relatedLink,
           year: formData.year,
+          isFeatured: formData.isFeatured || false,
         };
 
         const createResponse = await api.post('/project/new-project', projectData);
@@ -381,6 +384,17 @@ const DashboardProjects = () => {
                   }
                 />
               </div>
+              <div className="flex items-center gap-2">
+                <input
+                  id="isFeatured"
+                  type="checkbox"
+                  checked={formData.isFeatured || false}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isFeatured: e.target.checked })
+                  }
+                />
+                <Label htmlFor="isFeatured">Feature on public portfolio</Label>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="image">Project Image</Label>
                 <div className="border-2 border-dashed border-border/30 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
@@ -486,6 +500,11 @@ const DashboardProjects = () => {
                   {project.description}
                 </p>
               </div>
+              {project.isFeatured && (
+                <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-400 ml-2 shrink-0">
+                  Featured
+                </Badge>
+              )}
             </div>
 
             {/* Category Badge */}
@@ -677,6 +696,17 @@ const DashboardProjects = () => {
                   setFormData({ ...formData, year: e.target.value })
                 }
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="edit-isFeatured"
+                type="checkbox"
+                checked={formData.isFeatured || false}
+                onChange={(e) =>
+                  setFormData({ ...formData, isFeatured: e.target.checked })
+                }
+              />
+              <Label htmlFor="edit-isFeatured">Feature on public portfolio</Label>
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-image">Project Image</Label>

@@ -8,7 +8,8 @@ module.exports = (sequelize, DataTypes) => {
     endDate: { type: DataTypes.DATE, allowNull: true },
     isRemote: { type: DataTypes.BOOLEAN, defaultValue: false }, // true for remote, false for on-premise
     location: { type: DataTypes.STRING, allowNull: true },
-    isCurrentlyWorking: { type: DataTypes.BOOLEAN, defaultValue: false } // true if still working there
+    isCurrentlyWorking: { type: DataTypes.BOOLEAN, defaultValue: false }, // true if still working there
+    isFeatured: { type: DataTypes.BOOLEAN, defaultValue: false }
   });
 
   Experience.associate = (models) => {

@@ -8,7 +8,7 @@ const listExperienceByPublicId = async (publicId) => {
             return dataLessResponse(404, "Portfolio not found!");
         }
         const experiences = await Experience.findAll({
-            where: { userId: user.id },
+            where: { userId: user.id, isFeatured: true },
             order: [['startDate', 'DESC']]
         });
         return responseWithData(200, "Data retrieved!", experiences);

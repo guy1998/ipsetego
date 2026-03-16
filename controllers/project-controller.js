@@ -8,7 +8,7 @@ const listProjectByPublicId = async (publicId) => {
         if (!user) {
             return dataLessResponse(404, "Portfolio not found!");
         }
-        const projects = await Project.findAll({ where: { userId: user.id } });
+        const projects = await Project.findAll({ where: { userId: user.id, isFeatured: true } });
         return responseWithData(200, "Data retrieved!", projects);
     } catch (error) {
         return internalServerError();
