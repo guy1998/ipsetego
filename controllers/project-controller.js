@@ -25,13 +25,13 @@ const createProject = async (projectInfo, userId) => {
     }
 };
 
-const editProject = async (projectId, newINfo) => {
+const editProject = async (projectId, newInfo) => {
     try {
-        const editedProject = await Project.update(
-            { ...newINfo },
-            { where: { id: projectId }, returning: true }
-        );
-        return responseWithData(200, "Project edited successfully!", editedProject);
+        const project = await Project.findByPk(projectId);
+        if (!project) return dataLessResponse(404, "Project not found!");
+        project.set(newInfo);
+        await project.save();
+        return responseWithData(200, "Project edited successfully!", project);
     } catch (error) {
         return internalServerError();
     }

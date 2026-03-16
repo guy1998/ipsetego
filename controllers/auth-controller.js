@@ -3,11 +3,12 @@ const { passwordVerifier } = require('../utils/security');
 const { tokenIssuing } = require('../utils/jwt');
 const cookieManager = require('../utils/cookies');
 const userModule = require('./user-controller');
+const { encryptDeterministic } = require('../utils/encryption');
 
 const login = async (req, res) => {
     try {
         const { email, password } = req.body
-        const user = await User.findOne({ where: { email }});
+        const user = await User.findOne({ where: { email: encryptDeterministic(email) } });
         if (!user) {
             res.status(404).json({ message: "User not found!" });
         }else if (!passwordVerifier(password, user.password)) {

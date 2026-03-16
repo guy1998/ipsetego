@@ -5,6 +5,7 @@ const { User } = require('../models');
 const { retrieveId } = require('../utils/jwt');
 const { sendOtp, sendContactEmail } = require('../utils/mailer');
 const { generateOtp, sanitizeInput, passwordVerifier, passwordHasher } = require('../utils/security');
+const { encryptDeterministic } = require('../utils/encryption');
 const { uploadFile, deleteFile } = require('../utils/supabase');
 let uuidv4;
 import('uuid').then(module => {
@@ -31,7 +32,7 @@ const storeData = (otp, data) => {
 
 const checkUniqueness = async (email) => {
     try {
-        const user = await User.findOne({ where: { email } });
+        const user = await User.findOne({ where: { email: encryptDeterministic(email) } });
         return user === null;
     } catch(error) {
         return false;
@@ -79,11 +80,11 @@ const editUser = async (userId, newData) => {
         if ("password" in newData) {
             delete newData.password;
         }
-        const [updatedCount, updatedUsers] = await User.update(
-            newData,
-            { where: { id: userId }, returning: true }
-        );
-        return updatedCount ? responseWithData(200, "User updated successfully!", updatedUsers) : dataLessResponse(404, "User not found!");
+        const user = await User.findByPk(userId);
+        if (!user) return dataLessResponse(404, "User not found!");
+        user.set(newData); // triggers setters so all sensitive fields are encrypted
+        await user.save();
+        return responseWithData(200, "User updated successfully!", user);
     } catch (error) {
         return internalServerError()
     }

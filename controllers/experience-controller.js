@@ -9,7 +9,7 @@ const listExperienceByPublicId = async (publicId) => {
         }
         const experiences = await Experience.findAll({
             where: { userId: user.id, isFeatured: true },
-            order: [['startDate', 'DESC']]
+            order: [['createdAt', 'DESC']]
         });
         return responseWithData(200, "Data retrieved!", experiences);
     } catch (error) {
@@ -29,11 +29,11 @@ const createExperience = async (userId, experienceInfo) => {
 
 const editExperience = async (experienceId, newInfo) => {
     try {
-        const editedExperience = await Experience.update(
-            { ...newInfo },
-            { where: { id: experienceId }, returning: true }
-        );
-        return responseWithData(200, "Experience edited successfully!", editedExperience);
+        const experience = await Experience.findByPk(experienceId);
+        if (!experience) return dataLessResponse(404, "Experience not found!");
+        experience.set(newInfo);
+        await experience.save();
+        return responseWithData(200, "Experience edited successfully!", experience);
     } catch (error) {
         return internalServerError();
     }
@@ -52,7 +52,7 @@ const listExperience = async (userId) => {
     try {
         const experiences = await Experience.findAll({
             where: { userId },
-            order: [['startDate', 'DESC']]
+            order: [['createdAt', 'DESC']]
         });
         return responseWithData(200, "Data retrieved!", experiences);
     } catch (error) {

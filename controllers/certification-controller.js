@@ -29,11 +29,11 @@ const createCertification = async (userId, certificationInfo) => {
 
 const editCertification = async (certificationId, newInfo) => {
     try {
-        const editedCertification = await Certification.update(
-            { ...newInfo },
-            { where: { id: certificationId }, returning: true }
-        );
-        return responseWithData(200, "Certification edited successfully!", editedCertification);
+        const certification = await Certification.findByPk(certificationId);
+        if (!certification) return dataLessResponse(404, "Certification not found!");
+        certification.set(newInfo);
+        await certification.save();
+        return responseWithData(200, "Certification edited successfully!", certification);
     } catch (error) {
         return internalServerError();
     }

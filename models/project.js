@@ -1,13 +1,28 @@
+const { encrypt, decrypt } = require("../utils/encryption");
+
+const encField = (field) => ({
+  get() {
+    const raw = this.getDataValue(field);
+    return raw != null ? decrypt(raw) : raw;
+  },
+  set(value) {
+    this.setDataValue(field, value != null ? encrypt(String(value)) : value);
+  },
+});
+
 module.exports = (sequelize, DataTypes) => {
   const Project = sequelize.define('Project', {
-    title: { type: DataTypes.STRING, allowNull: false },
-    description: { type: DataTypes.STRING, allowNull: true },
-    category: { type: DataTypes.STRING, allowNull: true }, // web, mobile, design, writing, etc.
-    technologies: { type: DataTypes.JSON, allowNull: true }, // Optional array of technologies
-    relatedLink: { type: DataTypes.STRING, allowNull: true },
-    imageId: { type: DataTypes.STRING, allowNull: true },
-    year: { type: DataTypes.STRING, allowNull: true },
-    isFeatured: { type: DataTypes.BOOLEAN, defaultValue: false }
+    // ── GDPR-sensitive fields (encrypted at rest) ────────────────────
+    title:       { type: DataTypes.STRING, allowNull: false, ...encField('title') },
+    description: { type: DataTypes.STRING, allowNull: true,  ...encField('description') },
+    relatedLink: { type: DataTypes.STRING, allowNull: true,  ...encField('relatedLink') },
+
+    // ── Not sensitive: stored plain ──────────────────────────────────
+    category:     { type: DataTypes.STRING, allowNull: true },
+    technologies: { type: DataTypes.JSON,   allowNull: true },
+    imageId:      { type: DataTypes.STRING, allowNull: true },
+    year:         { type: DataTypes.STRING, allowNull: true },
+    isFeatured:   { type: DataTypes.BOOLEAN, defaultValue: false },
   });
 
   Project.associate = (models) => {
