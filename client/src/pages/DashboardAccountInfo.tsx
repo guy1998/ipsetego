@@ -9,20 +9,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Mail, Calendar, RefreshCw, Download } from 'lucide-react';
+import { Mail, Calendar, RefreshCw, Download, Trash2 } from 'lucide-react';
 import { Api } from '@/api/api';
 import { useToast } from '@/hooks/use-toast';
 import PortfolioDashboardLayout from '@/components/PortfolioDashboardLayout';
+import { useNavigate } from 'react-router-dom';
 
 const AccountInfoContent = () => {
   const api = Api.getInstance();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [createdAt, setCreatedAt] = useState('');
   const [updatedAt, setUpdatedAt] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     api.get('/user/profile').then((res) => {
@@ -51,6 +55,27 @@ const AccountInfoContent = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteLoading(true);
+    setDeleteModalOpen(false);
+    try {
+      await api.delete('/user/delete-self');
+      toast({
+        title: 'Account deleted',
+        description: 'Your data has been sent to your email. Goodbye!',
+      });
+      await api.post('/auth/logout', {});
+      navigate('/', { replace: true });
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete account. Please try again.',
+        variant: 'destructive',
+      });
+      setDeleteLoading(false);
     }
   };
 
@@ -107,6 +132,22 @@ const AccountInfoContent = () => {
         </Button>
       </Card>
 
+      <Card className="p-6 border-red-500/20 border space-y-3">
+        <h2 className="text-xl font-bold text-red-500">Danger Zone</h2>
+        <p className="text-sm text-muted-foreground">
+          Permanently delete your account and all associated data. Before deletion, a copy of your data will be sent to your registered email address. This action cannot be undone.
+        </p>
+        <Button
+          variant="destructive"
+          onClick={() => setDeleteModalOpen(true)}
+          disabled={deleteLoading}
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          {deleteLoading ? 'Deleting...' : 'Delete My Account'}
+        </Button>
+      </Card>
+
+      {/* Request Data Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -120,6 +161,34 @@ const AccountInfoContent = () => {
               Cancel
             </Button>
             <Button onClick={handleRequestData}>Continue</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Account Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Your Account</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <p>
+                  This will <strong className="text-foreground">permanently delete</strong> your account and everything associated with it — including your profile, projects, experience, certifications, profile picture, and CV.
+                </p>
+                <p>
+                  Before deletion, a ZIP archive of all your data will be sent to <strong className="text-foreground">{email}</strong>.
+                </p>
+                <p className="text-red-500 font-medium">This action cannot be undone.</p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteAccount}>
+              Yes, delete my account
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

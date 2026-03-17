@@ -3,7 +3,8 @@ const cache = new NodeCache({ stdTTL: 600 }); // Using 10 minutes as default ttl
 const { internalServerError, dataLessResponse, responseWithData } = require('../common/reused-responses');
 const { User } = require('../models');
 const { retrieveId } = require('../utils/jwt');
-const { sendOtp, sendContactEmail, sendDataRequestEmail } = require('../utils/mailer');
+const { sendOtp, sendContactEmail, sendDataRequestEmail, sendAccountDeletionEmail } = require('../utils/mailer');
+const { PassThrough } = require('stream');
 const { generateOtp, sanitizeInput, passwordVerifier, passwordHasher } = require('../utils/security');
 const { encryptDeterministic } = require('../utils/encryption');
 const { uploadFile, deleteFile, getPrivateFile } = require('../utils/supabase');
@@ -384,11 +385,139 @@ const downloadUserData = async (token, res) => {
     }
 };
 
+const deleteOwnAccount = async (req) => {
+    try {
+        const userId = retrieveId(req);
+        const BUCKET = process.env.SUPABASE_BUCKET_NAME;
+
+        const [user, projects, experiences, certifications] = await Promise.all([
+            User.findOne({ where: { id: userId } }),
+            Project.findAll({ where: { userId } }),
+            Experience.findAll({ where: { userId } }),
+            Certification.findAll({ where: { userId } }),
+        ]);
+
+        if (!user) return dataLessResponse(404, "User not found!");
+
+        // Build ZIP in memory
+        const archive = archiver('zip', { zlib: { level: 6 } });
+        const passThrough = new PassThrough();
+        const chunks = [];
+        passThrough.on('data', (chunk) => chunks.push(chunk));
+
+        const zipReady = new Promise((resolve, reject) => {
+            passThrough.on('end', resolve);
+            passThrough.on('error', reject);
+        });
+
+        archive.pipe(passThrough);
+
+        const profileData = {
+            name: user.name,
+            lastname: user.lastname,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            address: user.address,
+            birthday: user.birthday,
+            linkedin: user.linkedin,
+            github: user.github,
+            xing: user.xing,
+            twitter: user.twitter,
+            instagram: user.instagram,
+            youtube: user.youtube,
+            tiktok: user.tiktok,
+            hobbies: user.hobbies,
+            languages: user.languages,
+            skills: user.skills,
+            personalSlug: user.personalSlug,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        };
+
+        archive.append(JSON.stringify(profileData, null, 2), { name: 'profile.json' });
+        archive.append(JSON.stringify(projects.map(p => p.toJSON()), null, 2), { name: 'projects.json' });
+        archive.append(JSON.stringify(experiences.map(e => e.toJSON()), null, 2), { name: 'experiences.json' });
+        archive.append(JSON.stringify(certifications.map(c => c.toJSON()), null, 2), { name: 'certifications.json' });
+
+        for (const project of projects) {
+            if (project.imageId) {
+                try {
+                    const imgBuffer = await getPrivateFile(BUCKET, project.imageId);
+                    const ext = project.imageId.split('.').pop() || 'jpg';
+                    const safeName = (project.title || `project-${project.id}`).replace(/[^a-z0-9]/gi, '-').toLowerCase();
+                    archive.append(imgBuffer, { name: `project-images/${safeName}.${ext}` });
+                } catch (err) {
+                    console.log(`Warning: Could not include image for project ${project.id}: ${err.message}`);
+                }
+            }
+        }
+
+        if (user.pictureId) {
+            try {
+                const picBuffer = await getPrivateFile(BUCKET, user.pictureId);
+                const ext = user.pictureId.split('.').pop() || 'jpg';
+                archive.append(picBuffer, { name: `profile-picture.${ext}` });
+            } catch (err) {
+                console.log(`Warning: Could not include profile picture: ${err.message}`);
+            }
+        }
+
+        if (user.resumeId) {
+            try {
+                const cvBuffer = await getPrivateFile(BUCKET, user.resumeId);
+                const ext = user.resumeId.split('.').pop() || 'pdf';
+                archive.append(cvBuffer, { name: `cv.${ext}` });
+            } catch (err) {
+                console.log(`Warning: Could not include CV: ${err.message}`);
+            }
+        }
+
+        await archive.finalize();
+        await zipReady;
+
+        const zipBuffer = Buffer.concat(chunks);
+
+        // Send data to user before deleting
+        const sent = await sendAccountDeletionEmail(user.email, zipBuffer);
+        if (!sent) return dataLessResponse(500, "Failed to send data email. Account was not deleted.");
+
+        // Delete all files from Supabase storage
+        for (const project of projects) {
+            if (project.imageId) {
+                try { await deleteFile(BUCKET, project.imageId); } catch (err) {
+                    console.log(`Warning: Could not delete project image ${project.imageId}: ${err.message}`);
+                }
+            }
+        }
+
+        if (user.pictureId) {
+            try { await deleteFile(BUCKET, user.pictureId); } catch (err) {
+                console.log(`Warning: Could not delete profile picture: ${err.message}`);
+            }
+        }
+
+        if (user.resumeId) {
+            try { await deleteFile(BUCKET, user.resumeId); } catch (err) {
+                console.log(`Warning: Could not delete CV: ${err.message}`);
+            }
+        }
+
+        // Delete all database records
+        await User.destroy({ where: { id: userId } });
+
+        return dataLessResponse(200, "Account permanently deleted. Your data has been sent to your email.");
+    } catch (error) {
+        console.log(error);
+        return internalServerError();
+    }
+};
+
 module.exports = {
     createUser,
     editPassword,
     editUser,
     deleteUser,
+    deleteOwnAccount,
     listUsers,
     getUser,
     getUserByPublicId,

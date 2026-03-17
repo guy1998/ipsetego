@@ -130,9 +130,46 @@ async function sendDataRequestEmail(to, downloadLink) {
   }
 }
 
+async function sendAccountDeletionEmail(to, zipBuffer) {
+  try {
+    const info = await transporter.sendMail({
+      from: 'service@ipsetego.com',
+      to,
+      subject: 'Your ipsetego Account Has Been Deleted',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 30px; background-color: #f9f9f9;">
+          <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <h2 style="color: #333; margin-top: 0;">Your Account Has Been Deleted</h2>
+            <p style="color: #555; font-size: 15px;">
+              As requested, your ipsetego account and all associated data have been permanently deleted. Attached to this email is a ZIP archive containing a copy of all your data before deletion.
+            </p>
+            <p style="color: #555; font-size: 15px;">
+              The archive includes your profile, projects, experience, certifications, profile picture, and CV.
+            </p>
+            <p style="color: #888; font-size: 13px;">If you did not request this deletion, please contact our support immediately.</p>
+          </div>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: 'my-ipsetego-data.zip',
+          content: zipBuffer,
+          contentType: 'application/zip',
+        },
+      ],
+    });
+    console.log("Account deletion email sent: %s", info.messageId);
+    return true;
+  } catch (err) {
+    console.error("Error sending account deletion email:", err);
+    return false;
+  }
+}
+
 module.exports = {
   sendOtp,
   sendContactEmail,
   sendAdminAlert,
-  sendDataRequestEmail
+  sendDataRequestEmail,
+  sendAccountDeletionEmail,
 }

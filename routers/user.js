@@ -104,6 +104,11 @@ app.post('/request-data', authorize(), async (req, res) => {
     res.status(status).json(data);
 });
 
+app.delete('/delete-self', authorize(), async (req, res) => {
+    const { status, data } = await userModule.deleteOwnAccount(req);
+    res.status(status).json(data);
+});
+
 app.get('/download-data/:token', async (req, res) => {
     await userModule.downloadUserData(req.params.token, res);
 });
