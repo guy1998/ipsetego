@@ -3,7 +3,7 @@ const cache = new NodeCache({ stdTTL: 600 }); // Using 10 minutes as default ttl
 const { internalServerError, dataLessResponse, responseWithData } = require('../common/reused-responses');
 const { User } = require('../models');
 const { retrieveId } = require('../utils/jwt');
-const { sendOtp, sendContactEmail, sendDataRequestEmail, sendAccountDeletionEmail } = require('../utils/mailer');
+const { sendOtp, sendContactEmail, sendDataRequestEmail, sendAccountDeletionEmail, sendPasswordResetEmail } = require('../utils/mailer');
 const { PassThrough } = require('stream');
 const { generateOtp, sanitizeInput, passwordVerifier, passwordHasher } = require('../utils/security');
 const { encryptDeterministic } = require('../utils/encryption');
@@ -512,6 +512,61 @@ const deleteOwnAccount = async (req) => {
     }
 };
 
+const forgotPassword = async (email) => {
+    try {
+        const user = await User.findOne({ where: { email: encryptDeterministic(email) } });
+        // Always return success to avoid email enumeration
+        if (!user) return dataLessResponse(200, "If an account with that email exists, a reset link has been sent.");
+
+        const token = jwt.sign(
+            { userId: user.id, type: 'password-reset' },
+            process.env.JWT_KEY,
+            { expiresIn: '1h' }
+        );
+
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+        const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+
+        const sent = await sendPasswordResetEmail(user.email, resetLink);
+        if (!sent) return dataLessResponse(500, "Failed to send email. Please try again later.");
+
+        return dataLessResponse(200, "If an account with that email exists, a reset link has been sent.");
+    } catch (error) {
+        return internalServerError();
+    }
+};
+
+const resetPassword = async (token, newPassword) => {
+    try {
+        let payload;
+        try {
+            payload = jwt.verify(token, process.env.JWT_KEY);
+        } catch {
+            return dataLessResponse(400, "Invalid or expired reset link.");
+        }
+
+        if (payload.type !== 'password-reset') {
+            return dataLessResponse(400, "Invalid token type.");
+        }
+
+        if (!newPassword || newPassword.length < 6) {
+            return dataLessResponse(400, "Password must be at least 6 characters long.");
+        }
+
+        const user = await User.findByPk(payload.userId);
+        if (!user) return dataLessResponse(404, "User not found.");
+
+        await User.update(
+            { password: passwordHasher(newPassword) },
+            { where: { id: payload.userId } }
+        );
+
+        return dataLessResponse(200, "Password reset successfully!");
+    } catch (error) {
+        return internalServerError();
+    }
+};
+
 module.exports = {
     createUser,
     editPassword,
@@ -529,4 +584,6 @@ module.exports = {
     contactUser,
     requestUserData,
     downloadUserData,
+    forgotPassword,
+    resetPassword,
 }

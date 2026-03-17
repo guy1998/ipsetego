@@ -113,4 +113,18 @@ app.get('/download-data/:token', async (req, res) => {
     await userModule.downloadUserData(req.params.token, res);
 });
 
+app.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required." });
+    const { status, data } = await userModule.forgotPassword(email);
+    res.status(status).json(data);
+});
+
+app.post('/reset-password', async (req, res) => {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ message: "Token and password are required." });
+    const { status, data } = await userModule.resetPassword(token, password);
+    res.status(status).json(data);
+});
+
 module.exports = app;

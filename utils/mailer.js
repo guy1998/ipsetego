@@ -166,10 +166,42 @@ async function sendAccountDeletionEmail(to, zipBuffer) {
   }
 }
 
+async function sendPasswordResetEmail(to, resetLink) {
+  try {
+    const info = await transporter.sendMail({
+      from: 'service@ipsetego.com',
+      to,
+      subject: 'Reset your password — ipsetego',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 30px; background-color: #f9f9f9;">
+          <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <h2 style="color: #333; margin-top: 0;">Reset your password</h2>
+            <p style="color: #555; font-size: 15px;">
+              We received a request to reset the password for your ipsetego account. Click the button below to choose a new password.
+            </p>
+            <div style="margin: 28px 0; text-align: center;">
+              <a href="${resetLink}" style="display: inline-block; padding: 14px 28px; background-color: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 15px; font-weight: bold;">
+                Reset Password
+              </a>
+            </div>
+            <p style="color: #888; font-size: 13px;">This link is valid for 1 hour. If you did not request a password reset, you can safely ignore this email.</p>
+          </div>
+        </div>
+      `
+    });
+    console.log("Password reset email sent: %s", info.messageId);
+    return true;
+  } catch (err) {
+    console.error("Error sending password reset email:", err);
+    return false;
+  }
+}
+
 module.exports = {
   sendOtp,
   sendContactEmail,
   sendAdminAlert,
   sendDataRequestEmail,
   sendAccountDeletionEmail,
+  sendPasswordResetEmail,
 }

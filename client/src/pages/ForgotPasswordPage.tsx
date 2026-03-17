@@ -1,20 +1,24 @@
 import "../assets/styles/LoginPage.css";
 import { useState } from "react";
+import { Api } from "@/api/api";
 
 function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const api = Api.getInstance();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await api.post('/user/forgot-password', { email });
+    } catch {
+      // silently ignore — always show the success state to prevent email enumeration
+    } finally {
       setIsLoading(false);
       setIsSubmitted(true);
-    }, 1500);
+    }
   };
 
   const handleReset = () => {

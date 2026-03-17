@@ -1,13 +1,28 @@
 import "../assets/styles/LoginPage.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { Api } from "@/api/api";
 
 function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const api = Api.getInstance();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get('token');
+    if (!t) {
+      navigate('/forgot-password', { replace: true });
+    } else {
+      setToken(t);
+    }
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -21,14 +36,17 @@ function ResetPasswordPage() {
       toast({ title: "Error!", description: "Password needs to be at least six characters long!" });
       return;
     }
-    
+
     setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await api.post('/user/reset-password', { token, password });
       setIsSubmitted(true);
-    }, 1500);
+    } catch (error: any) {
+      const message = error?.response?.data?.message || "The reset link is invalid or has expired.";
+      toast({ title: "Error!", description: message });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleReset = () => {
