@@ -98,6 +98,7 @@ module.exports = (sequelize, DataTypes) => {
 
     // ── Not sensitive: stored plain ──────────────────────────────────
     role:         { type: DataTypes.ENUM('admin', 'user'), allowNull: false, defaultValue: 'user' },
+    isActive:     { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     personalSlug: { type: DataTypes.STRING, allowNull: false, default: 'admin' },
     publicId:     { type: DataTypes.STRING, allowNull: true, unique: true },
     pictureId:    { type: DataTypes.STRING, allowNull: true },

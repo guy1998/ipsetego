@@ -11,8 +11,10 @@ const login = async (req, res) => {
         const user = await User.findOne({ where: { email: encryptDeterministic(email) } });
         if (!user) {
             res.status(404).json({ message: "User not found!" });
-        }else if (!passwordVerifier(password, user.password)) {
+        } else if (!passwordVerifier(password, user.password)) {
             res.status(400).json({ message: "Password is invalid!" });
+        } else if (!user.isActive) {
+            res.status(403).json({ message: "Your account has been banned. Please contact support." });
         } else {
             const tokenObj = tokenIssuing({
                 userId: user.id,

@@ -10,9 +10,11 @@ const projectRouter = require('./routers/project');
 const fileRouter = require('./routers/file');
 const certificationRouter = require('./routers/certification');
 const newsletterRouter = require('./routers/newsletter');
+const adminRouter = require('./routers/admin');
 
 const allowedOrigins = [
   "http://localhost:8080",
+  "http://localhost:8081",
 ];
 
 const path = require("path");
@@ -45,6 +47,7 @@ app.use('/experience', experienceRouter);
 app.use('/certification', certificationRouter);
 app.use('/uploads', fileRouter);
 app.use('/newsletter', newsletterRouter);
+app.use('/admin', adminRouter);
 
 const PORT = process.env.PORT || 1989;
 
