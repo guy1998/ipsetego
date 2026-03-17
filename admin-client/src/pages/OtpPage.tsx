@@ -33,6 +33,18 @@ function OtpPage() {
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!digits) return;
+    const newOtp = [...otp];
+    digits.split('').forEach((char, i) => { newOtp[i] = char; });
+    setOtp(newOtp);
+    const nextIndex = Math.min(digits.length, 5);
+    const nextInput = document.getElementById(`otp-${nextIndex}`);
+    if (nextInput) nextInput.focus();
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const otpValue = otp.join('');
@@ -109,6 +121,7 @@ function OtpPage() {
                   value={digit}
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
+                  onPaste={handlePaste}
                   className="otp-input"
                   required
                   disabled={isLoading}
