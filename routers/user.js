@@ -99,4 +99,13 @@ app.post('/upload-cv', authorize(), upload.single('cv'), async (req, res) => {
     res.status(status).json(data);
 });
 
+app.post('/request-data', authorize(), async (req, res) => {
+    const { status, data } = await userModule.requestUserData(req);
+    res.status(status).json(data);
+});
+
+app.get('/download-data/:token', async (req, res) => {
+    await userModule.downloadUserData(req.params.token, res);
+});
+
 module.exports = app;

@@ -99,8 +99,40 @@ async function sendAdminAlert(adminEmails, unauthorizedEmail) {
   }
 }
 
+async function sendDataRequestEmail(to, downloadLink) {
+  try {
+    const info = await transporter.sendMail({
+      from: 'service@ipsetego.com',
+      to,
+      subject: 'Your Data Export — ipsetego',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 30px; background-color: #f9f9f9;">
+          <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <h2 style="color: #333; margin-top: 0;">Your Data Export is Ready</h2>
+            <p style="color: #555; font-size: 15px;">
+              You requested an export of all data associated with your ipsetego account. Click the button below to download a ZIP archive containing your full profile, projects, experience, certifications, profile picture, and CV.
+            </p>
+            <div style="margin: 28px 0; text-align: center;">
+              <a href="${downloadLink}" style="display: inline-block; padding: 14px 28px; background-color: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 15px; font-weight: bold;">
+                Download My Data
+              </a>
+            </div>
+            <p style="color: #888; font-size: 13px;">This link is valid for 24 hours. If you did not request this export, you can safely ignore this email.</p>
+          </div>
+        </div>
+      `
+    });
+    console.log("Data request email sent: %s", info.messageId);
+    return true;
+  } catch (err) {
+    console.error("Error sending data request email:", err);
+    return false;
+  }
+}
+
 module.exports = {
   sendOtp,
   sendContactEmail,
-  sendAdminAlert
+  sendAdminAlert,
+  sendDataRequestEmail
 }

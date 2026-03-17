@@ -461,7 +461,7 @@ function OtpPage({ email }) {
                         </button>
 
                         <div className="otp-actions">
-                            <p className="resend-text">
+                            {/* <p className="resend-text">
                                 Didn't receive the code?{' '}
                                 <button
                                     type="button"
@@ -470,7 +470,7 @@ function OtpPage({ email }) {
                                 >
                                     Resend OTP
                                 </button>
-                            </p>
+                            </p> */}
                         </div>
 
                         <div className="back-to-login">

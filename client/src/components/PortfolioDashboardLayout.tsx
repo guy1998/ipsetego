@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/use-theme';
-import { Moon, Sun, Eye, Home, Briefcase, Award, LogOut, User } from 'lucide-react';
+import { Moon, Sun, Eye, Home, Briefcase, Award, LogOut, User, ShieldCheck } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Api } from '@/api/api';
 import { useToast } from '@/hooks/use-toast';
@@ -145,21 +145,15 @@ const PortfolioDashboardLayout = ({ children }: PortfolioDashboardLayoutProps) =
             <LogOut className="w-4 h-4 mr-2" />
             Logout
           </Button>
-        </div>
 
-        {/* Theme Toggle */}
-        <div className="border-t border-border/20 p-4">
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-center"
-            onClick={toggleTheme}
+            className="w-full justify-start"
+            onClick={() => navigate('/app/dashboard/account')}
           >
-            {theme === 'dark' ? (
-              <Sun className="w-4 h-4" />
-            ) : (
-              <Moon className="w-4 h-4" />
-            )}
+            <ShieldCheck className="w-4 h-4 mr-2" />
+            Account
           </Button>
         </div>
       </aside>

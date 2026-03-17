@@ -20,6 +20,7 @@ import Dashboard from "./pages/Dashboard";
 import DashboardPersonalInfo from "./pages/DashboardPersonalInfo";
 import ProjectsDashboard from "./pages/ProjectsDashboard";
 import ExperienceDashboard from "./pages/ExperienceDashboard";
+import DashboardAccountInfo from "./pages/DashboardAccountInfo";
 import PortfolioChat from "./components/PortfolioChat";
 import PublicPortfolioPage from "./pages/PublicPortfolioPage";
 import PublicProjectsPage from "./pages/PublicProjectsPage";
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/app/dashboard/personal" element={<DashboardPersonalInfo />} />
               <Route path="/app/dashboard/projects" element={<ProjectsDashboard />} />
               <Route path="/app/dashboard/experience" element={<ExperienceDashboard />} />
+              <Route path="/app/dashboard/account" element={<DashboardAccountInfo />} />
               <Route path="/app/projects" element={<ProjectsPage />} />
               <Route path="/app/experience" element={<ExperiencePage />} />
               <Route path="/login" element={<LoginPage />} />
