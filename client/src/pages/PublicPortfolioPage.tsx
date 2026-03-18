@@ -95,26 +95,75 @@ const PublicPortfolioPage = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+    const prompt = inputValue.trim();
+    if (!prompt || !user) return;
+
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
-      content: inputValue,
+      content: prompt,
       timestamp: new Date(),
     };
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsTyping(true);
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: `Thanks for your question! Feel free to explore my projects and experience using the navigation links above, or reach out to me directly via email.`,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+
+    const assistantId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, { id: assistantId, type: 'assistant', content: '', timestamp: new Date() }]);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/model/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ publicId: user.publicId, prompt }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error('Failed to reach model');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.token) {
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId ? { ...m, content: m.content + parsed.token } : m
+                )
+              );
+            }
+          } catch {
+            // skip malformed SSE lines
+          }
+        }
+      }
+    } catch {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantId
+            ? { ...m, content: 'Sorry, I could not generate a response at this time.' }
+            : m
+        )
+      );
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

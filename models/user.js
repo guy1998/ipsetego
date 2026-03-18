@@ -116,6 +116,7 @@ module.exports = (sequelize, DataTypes) => {
     User.hasMany(models.Project, { foreignKey: 'userId', onDelete: 'CASCADE', hooks: true });
     User.hasMany(models.Experience, { foreignKey: 'userId', onDelete: 'CASCADE', hooks: true });
     User.hasMany(models.Certification, { foreignKey: 'userId', onDelete: 'CASCADE', hooks: true });
+    User.hasMany(models.ModelInteraction, { foreignKey: 'userId', onDelete: 'CASCADE', hooks: true });
   };
 
   User.addHook('beforeDestroy', async (user, options) => {

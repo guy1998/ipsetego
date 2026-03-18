@@ -17,5 +17,6 @@ app.get('/authorize', adminAuthorize(), (req, res) => res.status(200).json({ mes
 app.get('/users', adminAuthorize(), adminModule.getUsers);
 app.get('/users/:id', adminAuthorize(), adminModule.getUserById);
 app.put('/users/:id/ban', adminAuthorize(), adminModule.banUser);
+app.get('/users/:id/interactions', adminAuthorize(), adminModule.getUserInteractions);
 
 module.exports = app;

@@ -4,7 +4,7 @@ import { AdminApi } from '@/api/api';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Ban, ArrowLeft, User } from 'lucide-react';
+import { Ban, ArrowLeft, User, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 interface UserDetail {
@@ -35,11 +35,36 @@ interface UserDetail {
   updatedAt: string;
 }
 
+interface Interaction {
+  id: number;
+  question: string;
+  response: string | null;
+  ip: string | null;
+  questionAt: string;
+  responseAt: string | null;
+}
+
+interface InteractionsData {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  interactions: Interaction[];
+}
+
+type Tab = 'profile' | 'interactions';
+
 function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [user, setUser] = useState<UserDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBanning, setIsBanning] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>('profile');
+
+  const [interactions, setInteractions] = useState<InteractionsData | null>(null);
+  const [interactionsLoading, setInteractionsLoading] = useState(false);
+  const [interactionsPage, setInteractionsPage] = useState(1);
+
   const { toast } = useToast();
   const navigate = useNavigate();
   const api = AdminApi.getInstance();
@@ -58,6 +83,22 @@ function UserDetailPage() {
     };
     fetchUser();
   }, [id]);
+
+  useEffect(() => {
+    if (activeTab !== 'interactions' || !id) return;
+    const fetchInteractions = async () => {
+      setInteractionsLoading(true);
+      try {
+        const response = await api.get(`/admin/users/${id}/interactions`, { page: interactionsPage, limit: 10 });
+        setInteractions(response.data.data);
+      } catch {
+        toast({ title: 'Error!', description: 'Failed to load interactions.' });
+      } finally {
+        setInteractionsLoading(false);
+      }
+    };
+    fetchInteractions();
+  }, [activeTab, id, interactionsPage]);
 
   const handleBan = async () => {
     if (!user) return;
@@ -80,6 +121,18 @@ function UserDetailPage() {
     if (!iso) return '—';
     try {
       return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    } catch {
+      return iso;
+    }
+  };
+
+  const formatDateTime = (iso: string) => {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+      });
     } catch {
       return iso;
     }
@@ -133,102 +186,209 @@ function UserDetailPage() {
           </div>
         </div>
 
-        {/* Profile Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Avatar & basic info */}
-          <div className="bg-card border border-border/20 rounded-xl p-6 flex flex-col items-center gap-3">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
-              <User className="w-10 h-10 text-white" />
-            </div>
-            <div className="text-center">
-              <p className="font-bold text-lg">{user.name} {user.lastname}</p>
-              <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="mt-1">
-                {user.role}
-              </Badge>
-            </div>
-            <div className="w-full border-t border-border/20 pt-3 space-y-2">
-              <Field label="Member since" value={formatDate(user.createdAt)} />
-              <Field label="Public ID" value={user.publicId} />
-            </div>
-          </div>
-
-          {/* Personal Info */}
-          <div className="md:col-span-2 bg-card border border-border/20 rounded-xl p-6">
-            <h2 className="font-semibold mb-4">Personal Information</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="First Name" value={user.name} />
-              <Field label="Last Name" value={user.lastname} />
-              <Field label="Email" value={user.email} />
-              <Field label="Phone" value={user.phoneNumber} />
-              <Field label="Birthday" value={user.birthday ? formatDate(String(user.birthday)) : '—'} />
-              <Field label="Address" value={user.address} />
-            </div>
-          </div>
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-border/20">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'profile'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <User className="w-4 h-4" />
+            Profile
+          </button>
+          <button
+            onClick={() => setActiveTab('interactions')}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'interactions'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            Model Interactions
+          </button>
         </div>
 
-        {/* Social Links */}
-        <div className="bg-card border border-border/20 rounded-xl p-6">
-          <h2 className="font-semibold mb-4">Social Links</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Field label="LinkedIn" value={user.linkedin} />
-            <Field label="GitHub" value={user.github} />
-            <Field label="Twitter / X" value={user.twitter} />
-            <Field label="Instagram" value={user.instagram} />
-            <Field label="YouTube" value={user.youtube} />
-            <Field label="TikTok" value={user.tiktok} />
-            <Field label="Xing" value={user.xing} />
-          </div>
-        </div>
-
-        {/* Skills & Languages */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-card border border-border/20 rounded-xl p-6">
-            <h2 className="font-semibold mb-4">Skills</h2>
-            {user.skills && Array.isArray(user.skills) && user.skills.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {(user.skills as Array<{ name?: string }>).map((s, i) => (
-                  <Badge key={i} variant="secondary">{s?.name ?? String(s)}</Badge>
-                ))}
+        {/* Profile Tab */}
+        {activeTab === 'profile' && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Avatar & basic info */}
+              <div className="bg-card border border-border/20 rounded-xl p-6 flex flex-col items-center gap-3">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
+                  <User className="w-10 h-10 text-white" />
+                </div>
+                <div className="text-center">
+                  <p className="font-bold text-lg">{user.name} {user.lastname}</p>
+                  <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="mt-1">
+                    {user.role}
+                  </Badge>
+                </div>
+                <div className="w-full border-t border-border/20 pt-3 space-y-2">
+                  <Field label="Member since" value={formatDate(user.createdAt)} />
+                  <Field label="Public ID" value={user.publicId} />
+                </div>
               </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">No skills added.</p>
-            )}
-          </div>
 
-          <div className="bg-card border border-border/20 rounded-xl p-6">
-            <h2 className="font-semibold mb-4">Languages</h2>
-            {user.languages && Array.isArray(user.languages) && user.languages.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {(user.languages as Array<{ name?: string; level?: number }>).map((l, i) => (
-                  <Badge key={i} variant="outline">{l?.name ?? String(l)}{l?.level ? ` (${l.level}/5)` : ''}</Badge>
-                ))}
+              {/* Personal Info */}
+              <div className="md:col-span-2 bg-card border border-border/20 rounded-xl p-6">
+                <h2 className="font-semibold mb-4">Personal Information</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="First Name" value={user.name} />
+                  <Field label="Last Name" value={user.lastname} />
+                  <Field label="Email" value={user.email} />
+                  <Field label="Phone" value={user.phoneNumber} />
+                  <Field label="Birthday" value={user.birthday ? formatDate(String(user.birthday)) : '—'} />
+                  <Field label="Address" value={user.address} />
+                </div>
               </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">No languages added.</p>
-            )}
-          </div>
-        </div>
-
-        {/* Hobbies */}
-        {user.hobbies && Array.isArray(user.hobbies) && user.hobbies.length > 0 && (
-          <div className="bg-card border border-border/20 rounded-xl p-6">
-            <h2 className="font-semibold mb-4">Hobbies</h2>
-            <div className="flex flex-wrap gap-2">
-              {user.hobbies.map((h, i) => (
-                <Badge key={i} variant="secondary">{h}</Badge>
-              ))}
             </div>
-          </div>
+
+            {/* Social Links */}
+            <div className="bg-card border border-border/20 rounded-xl p-6">
+              <h2 className="font-semibold mb-4">Social Links</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Field label="LinkedIn" value={user.linkedin} />
+                <Field label="GitHub" value={user.github} />
+                <Field label="Twitter / X" value={user.twitter} />
+                <Field label="Instagram" value={user.instagram} />
+                <Field label="YouTube" value={user.youtube} />
+                <Field label="TikTok" value={user.tiktok} />
+                <Field label="Xing" value={user.xing} />
+              </div>
+            </div>
+
+            {/* Skills & Languages */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-card border border-border/20 rounded-xl p-6">
+                <h2 className="font-semibold mb-4">Skills</h2>
+                {user.skills && Array.isArray(user.skills) && user.skills.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {(user.skills as Array<{ name?: string }>).map((s, i) => (
+                      <Badge key={i} variant="secondary">{s?.name ?? String(s)}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">No skills added.</p>
+                )}
+              </div>
+
+              <div className="bg-card border border-border/20 rounded-xl p-6">
+                <h2 className="font-semibold mb-4">Languages</h2>
+                {user.languages && Array.isArray(user.languages) && user.languages.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {(user.languages as Array<{ name?: string; level?: number }>).map((l, i) => (
+                      <Badge key={i} variant="outline">{l?.name ?? String(l)}{l?.level ? ` (${l.level}/5)` : ''}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">No languages added.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Hobbies */}
+            {user.hobbies && Array.isArray(user.hobbies) && user.hobbies.length > 0 && (
+              <div className="bg-card border border-border/20 rounded-xl p-6">
+                <h2 className="font-semibold mb-4">Hobbies</h2>
+                <div className="flex flex-wrap gap-2">
+                  {user.hobbies.map((h, i) => (
+                    <Badge key={i} variant="secondary">{h}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Files */}
+            <div className="bg-card border border-border/20 rounded-xl p-6">
+              <h2 className="font-semibold mb-4">Files</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Profile Picture ID" value={user.pictureId} />
+                <Field label="CV / Resume ID" value={user.resumeId} />
+              </div>
+            </div>
+          </>
         )}
 
-        {/* Files */}
-        <div className="bg-card border border-border/20 rounded-xl p-6">
-          <h2 className="font-semibold mb-4">Files</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Profile Picture ID" value={user.pictureId} />
-            <Field label="CV / Resume ID" value={user.resumeId} />
+        {/* Interactions Tab */}
+        {activeTab === 'interactions' && (
+          <div className="space-y-4">
+            {interactionsLoading ? (
+              <div className="flex items-center justify-center py-20 text-muted-foreground">
+                Loading interactions...
+              </div>
+            ) : !interactions || interactions.interactions.length === 0 ? (
+              <div className="bg-card border border-border/20 rounded-xl p-12 text-center text-muted-foreground">
+                No model interactions recorded for this user.
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  {interactions.total} interaction{interactions.total !== 1 ? 's' : ''} total
+                </p>
+
+                {interactions.interactions.map((item) => (
+                  <div key={item.id} className="bg-card border border-border/20 rounded-xl p-5 space-y-4">
+                    {/* Meta */}
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>IP: {item.ip ?? '—'}</span>
+                      <span>Asked: {formatDateTime(item.questionAt)}</span>
+                    </div>
+
+                    {/* Question */}
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Question</p>
+                      <p className="text-sm bg-muted/40 rounded-lg px-3 py-2">{item.question}</p>
+                    </div>
+
+                    {/* Response */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Response</p>
+                        {item.responseAt && (
+                          <span className="text-xs text-muted-foreground">
+                            Answered: {formatDateTime(item.responseAt)}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap bg-muted/20 rounded-lg px-3 py-2">
+                        {item.response ?? <span className="italic text-muted-foreground">No response recorded.</span>}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Pagination */}
+                {interactions.totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setInteractionsPage(p => Math.max(1, p - 1))}
+                      disabled={interactionsPage === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {interactions.page} of {interactions.totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setInteractionsPage(p => Math.min(interactions.totalPages, p + 1))}
+                      disabled={interactionsPage === interactions.totalPages}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </AdminDashboardLayout>
   );
