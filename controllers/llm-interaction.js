@@ -100,7 +100,8 @@ const streamModelAsUser = async (publicId, prompt, ip, res) => {
     let fullResponse = '';
 
     ollamaResponse.data.on('data', (chunk) => {
-        const lines = chunk.toString().split('\n').filter(l => l.trim());
+        const raw = chunk.toString();
+        const lines = raw.split('\n').filter(l => l.trim());
         for (const line of lines) {
             try {
                 const parsed = JSON.parse(line);
