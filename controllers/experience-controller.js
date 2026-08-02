@@ -27,10 +27,13 @@ const createExperience = async (userId, experienceInfo) => {
     }
 };
 
-const editExperience = async (experienceId, newInfo) => {
+const editExperience = async (experienceId, newInfo, requestingUserId) => {
     try {
         const experience = await Experience.findByPk(experienceId);
         if (!experience) return dataLessResponse(404, "Experience not found!");
+        if (String(experience.userId) !== String(requestingUserId)) {
+            return dataLessResponse(403, "You do not have permission to modify this experience!");
+        }
         experience.set(newInfo);
         await experience.save();
         return responseWithData(200, "Experience edited successfully!", experience);
@@ -39,9 +42,14 @@ const editExperience = async (experienceId, newInfo) => {
     }
 };
 
-const deleteExperience = async (experienceId) => {
+const deleteExperience = async (experienceId, requestingUserId) => {
     try {
-        await Experience.destroy({ where: { id: experienceId } });
+        const experience = await Experience.findByPk(experienceId);
+        if (!experience) return dataLessResponse(404, "Experience not found!");
+        if (String(experience.userId) !== String(requestingUserId)) {
+            return dataLessResponse(403, "You do not have permission to delete this experience!");
+        }
+        await experience.destroy();
         return dataLessResponse(200, "Experience deleted successfully!");
     } catch (error) {
         return internalServerError();

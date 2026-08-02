@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-HOST = process.env.HOST;
+const HOST = process.env.HOST;
 
 module.exports = {
     HOST

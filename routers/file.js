@@ -2,6 +2,24 @@ const express = require('express');
 const router = express.Router();
 const { getPrivateFile } = require('../utils/supabase');
 const cookieParser = require('cookie-parser');
+const allowedOrigins = require('../common/allowed-origins');
+
+// Portfolio media (profile pictures, CVs, project images) is meant to be
+// publicly viewable on a user's public portfolio page, so these routes are
+// intentionally unauthenticated. This middleware just makes sure requests
+// are coming from our own frontend(s) rather than being hotlinked/scraped
+// directly. Origin/Referer are attacker-controllable and this is not a
+// substitute for real authorization — it only keeps casual direct access out.
+const requireFrontendOrigin = (req, res, next) => {
+  const source = req.headers.origin || req.headers.referer;
+  const isAllowed = !!source && allowedOrigins.some(origin => source.startsWith(origin));
+  if (!isAllowed) {
+    return res.status(403).json({ success: false, message: 'Forbidden' });
+  }
+  next();
+};
+
+router.use(requireFrontendOrigin);
 
 /**
  * GET /file
@@ -12,7 +30,7 @@ const cookieParser = require('cookie-parser');
 router.get('/:path', async (req, res) => {
   try {
     const bucket = process.env.SUPABASE_BUCKET_NAME;
-    const path = req.query.path;
+    const path = req.params.path;
 
     if (!bucket || !path) {
       return res.status(400).json({
@@ -33,7 +51,7 @@ router.get('/:path', async (req, res) => {
     console.error('File serve error:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Unable to serve file'
     });
   }
 });
@@ -81,7 +99,7 @@ router.get('/image/:path', async (req, res) => {
     console.error('Image serve error:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Unable to serve image'
     });
   }
 });
@@ -116,7 +134,7 @@ router.get('/cv/:path', async (req, res) => {
     console.error('CV serve error:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Unable to serve file'
     });
   }
 });

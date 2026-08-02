@@ -12,10 +12,7 @@ const certificationRouter = require('./routers/certification');
 const newsletterRouter = require('./routers/newsletter');
 const adminRouter = require('./routers/admin');
 
-const allowedOrigins = [
-  "http://localhost:8080",
-  "http://localhost:8081",
-];
+const allowedOrigins = require('./common/allowed-origins');
 
 const path = require("path");
 const cookieParser = require("cookie-parser");

@@ -19,7 +19,7 @@ app.post('/new-project', authorize(), async (req, res) => {
 });
 
 app.put('/update/:projectId', authorize(), async (req, res) => {
-    const { status, data } = await projectModule.editProject(req.params.projectId, req.body);
+    const { status, data } = await projectModule.editProject(req.params.projectId, req.body, retrieveId(req));
     res.status(status).json(data);
 });
 
@@ -29,7 +29,7 @@ app.post('/upload-image/:projectId', authorize(), upload.single('projectImage'),
         return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
-    const { status, data } = await projectModule.uploadProjectImage(req.params.projectId, file.buffer, file.originalname);
+    const { status, data } = await projectModule.uploadProjectImage(req.params.projectId, file.buffer, file.originalname, retrieveId(req));
     res.status(status).json(data);
 });
 
@@ -39,7 +39,7 @@ app.post('/update-image/:projectId', authorize(), upload.single('projectImage'),
         return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
-    const { status, data } = await projectModule.updateProjectImage(req.params.projectId, file.buffer, file.originalname);
+    const { status, data } = await projectModule.updateProjectImage(req.params.projectId, file.buffer, file.originalname, retrieveId(req));
     res.status(status).json(data);
 });
 
@@ -64,7 +64,7 @@ app.get('/project-item/:id', async (req, res) => {
 });
 
 app.delete('/:id', authorize(), async (req, res) => {
-    const { status, data } = await projectModule.deleteProject(req.params.id);
+    const { status, data } = await projectModule.deleteProject(req.params.id, retrieveId(req));
     res.status(status).json(data);
 });
 

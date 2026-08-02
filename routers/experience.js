@@ -14,7 +14,7 @@ app.post('/new-experience', authorize(), async (req, res) => {
 });
 
 app.put('/update/:experienceId', authorize(), async (req, res) => {
-    const { status, data } = await experienceModule.editExperience(req.params.experienceId, req.body);
+    const { status, data } = await experienceModule.editExperience(req.params.experienceId, req.body, retrieveId(req));
     res.status(status).json(data);
 });
 
@@ -39,7 +39,7 @@ app.get('/experience-item/:id', async (req, res) => {
 });
 
 app.delete('/:id', authorize(), async (req, res) => {
-    const { status, data } = await experienceModule.deleteExperience(req.params.id);
+    const { status, data } = await experienceModule.deleteExperience(req.params.id, retrieveId(req));
     res.status(status).json(data);
 });
 

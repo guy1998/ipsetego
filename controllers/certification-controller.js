@@ -27,10 +27,13 @@ const createCertification = async (userId, certificationInfo) => {
     }
 };
 
-const editCertification = async (certificationId, newInfo) => {
+const editCertification = async (certificationId, newInfo, requestingUserId) => {
     try {
         const certification = await Certification.findByPk(certificationId);
         if (!certification) return dataLessResponse(404, "Certification not found!");
+        if (String(certification.userId) !== String(requestingUserId)) {
+            return dataLessResponse(403, "You do not have permission to modify this certification!");
+        }
         certification.set(newInfo);
         await certification.save();
         return responseWithData(200, "Certification edited successfully!", certification);
@@ -39,9 +42,14 @@ const editCertification = async (certificationId, newInfo) => {
     }
 };
 
-const deleteCertification = async (certificationId) => {
+const deleteCertification = async (certificationId, requestingUserId) => {
     try {
-        await Certification.destroy({ where: { id: certificationId } });
+        const certification = await Certification.findByPk(certificationId);
+        if (!certification) return dataLessResponse(404, "Certification not found!");
+        if (String(certification.userId) !== String(requestingUserId)) {
+            return dataLessResponse(403, "You do not have permission to delete this certification!");
+        }
+        await certification.destroy();
         return dataLessResponse(200, "Certification deleted successfully!");
     } catch (error) {
         return internalServerError();

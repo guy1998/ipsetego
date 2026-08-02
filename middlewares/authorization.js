@@ -29,12 +29,11 @@ const authorize = (roleRequired = null) => {
           });
           req.cookies.tokenCookie.accessToken =
             refreshAccess.content.accessToken;
-          const roleCheckResult = checkRole(
-            refreshAccess.content.accessToken.role,
-            roleRequired,
-          );
+          const decoded = tokenChecker(refreshAccess.content.accessToken);
+          const roleCheckResult =
+            decoded.result && checkRole(decoded.payload.role, roleRequired);
           if (roleCheckResult) {
-            req.user = refreshAccess.content.accessToken.userId;
+            req.user = decoded.payload;
             return next();
           }
           return res.status(403).json("Access not allowed for this role!");

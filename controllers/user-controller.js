@@ -30,6 +30,26 @@ const sanitizeData = (data) => {
     return sanitizedData;
 };
 
+// Fields a user may edit on their own profile. Deliberately excludes
+// role/isActive/publicId/pictureId/resumeId/password/id so they can't be
+// mass-assigned via a raw request body.
+const SELF_EDITABLE_FIELDS = [
+    'name', 'lastname', 'phoneNumber', 'address', 'email', 'birthday',
+    'linkedin', 'github', 'xing', 'twitter', 'instagram', 'youtube', 'tiktok',
+    'hobbies', 'languages', 'skills',
+];
+
+// Admins can additionally manage role/active state through this path.
+const ADMIN_EDITABLE_FIELDS = [...SELF_EDITABLE_FIELDS, 'role', 'isActive'];
+
+const pickAllowedFields = (data, allowedFields) => {
+    const picked = {};
+    for (const key of allowedFields) {
+        if (key in data) picked[key] = data[key];
+    }
+    return picked;
+};
+
 const storeData = (otp, data) => {
     cache.set(otp, data);
 };
@@ -71,7 +91,9 @@ const retrieveCache = (otp) => {
 
 const createUser = async (userData) => {
     try {
-        const newUser = await User.create(userData);
+        // role is never taken from the caller here — always forced to 'user'.
+        // Admin accounts are provisioned separately (see ADMIN_WHITELIST / admin OTP flow).
+        const newUser = await User.create({ ...userData, role: 'user' });
         return responseWithData(200, "User created successfully!", newUser);
     } catch (error) {
         console.log(error);
@@ -79,14 +101,12 @@ const createUser = async (userData) => {
     }
 };
 
-const editUser = async (userId, newData) => {
+const editUser = async (userId, newData, allowedFields = SELF_EDITABLE_FIELDS) => {
     try {
-        if ("password" in newData) {
-            delete newData.password;
-        }
+        const filteredData = pickAllowedFields(newData, allowedFields);
         const user = await User.findByPk(userId);
         if (!user) return dataLessResponse(404, "User not found!");
-        user.set(newData); // triggers setters so all sensitive fields are encrypted
+        user.set(filteredData); // triggers setters so all sensitive fields are encrypted
         await user.save();
         return responseWithData(200, "User updated successfully!", user);
     } catch (error) {
@@ -251,7 +271,14 @@ const contactUser = async (publicId, fromName, fromSurname, fromEmail, subject, 
         if (!user) {
             return dataLessResponse(404, "Portfolio not found!");
         }
-        const sent = await sendContactEmail(user.email, fromName, fromSurname, fromEmail, subject, content);
+        const sent = await sendContactEmail(
+            user.email,
+            sanitizeInput(fromName),
+            sanitizeInput(fromSurname),
+            sanitizeInput(fromEmail),
+            sanitizeInput(subject),
+            sanitizeInput(content),
+        );
         if (!sent) {
             return dataLessResponse(500, "Failed to send message. Please try again later.");
         }
@@ -568,6 +595,7 @@ const resetPassword = async (token, newPassword) => {
 };
 
 module.exports = {
+    ADMIN_EDITABLE_FIELDS,
     createUser,
     editPassword,
     editUser,

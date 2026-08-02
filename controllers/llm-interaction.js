@@ -1,5 +1,4 @@
-const axios = require('axios');
-const { HOST } = require('../common/contants');
+const llmProvider = require('../utils/llm');
 const { User, Project, Experience, ModelInteraction } = require('../models');
 
 const buildUserContext = (user) => {
@@ -87,38 +86,13 @@ const streamModelAsUser = async (publicId, prompt, ip, res) => {
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    const ollamaResponse = await axios.post(`${HOST}/api/generate`, {
-        model: 'mistral',
-        prompt: fullPrompt,
-        stream: true,
-    }, {
-        headers: { 'Content-Type': 'application/json' },
-        responseType: 'stream',
-        timeout: 120000,
-    });
+    try {
+        const fullResponse = await llmProvider.streamCompletion(fullPrompt, (token) => {
+            res.write(`data: ${JSON.stringify({ token })}\n\n`);
+        });
 
-    let fullResponse = '';
+        res.write(`data: [DONE]\n\n`);
 
-    ollamaResponse.data.on('data', (chunk) => {
-        const raw = chunk.toString();
-        const lines = raw.split('\n').filter(l => l.trim());
-        for (const line of lines) {
-            try {
-                const parsed = JSON.parse(line);
-                if (parsed.response) {
-                    fullResponse += parsed.response;
-                    res.write(`data: ${JSON.stringify({ token: parsed.response })}\n\n`);
-                }
-                if (parsed.done) {
-                    res.write(`data: [DONE]\n\n`);
-                }
-            } catch {
-                // skip malformed JSON lines
-            }
-        }
-    });
-
-    ollamaResponse.data.on('end', async () => {
         try {
             await interaction.update({
                 response: fullResponse,
@@ -127,14 +101,12 @@ const streamModelAsUser = async (publicId, prompt, ip, res) => {
         } catch (err) {
             console.error('Error saving interaction response:', err.message);
         }
-        res.end();
-    });
-
-    ollamaResponse.data.on('error', async (err) => {
-        console.error('Ollama stream error:', err.message);
+    } catch (err) {
+        console.error('LLM stream error:', err.message);
         res.write(`data: ${JSON.stringify({ error: 'Stream error' })}\n\n`);
+    } finally {
         res.end();
-    });
+    }
 };
 
 module.exports = {

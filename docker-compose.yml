@@ -1,0 +1,65 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASS:-postgres}
+      POSTGRES_DB: ${DATABASE:-ipsetego}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Inside the compose network the DB is reachable at the service name,
+      # not localhost — this overrides whatever DATABASE_HOST is set to in .env.
+      DATABASE_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-1989}:${PORT:-1989}"
+    extra_hosts:
+      # Lets the container reach an Ollama server running on your host
+      # machine via HOST=http://host.docker.internal:11434 in .env.
+      - "host.docker.internal:host-gateway"
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_BACKEND_URL: ${BACKEND_URL:-http://localhost:1989}
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+  admin-client:
+    build:
+      context: ./admin-client
+      dockerfile: Dockerfile
+      args:
+        VITE_BACKEND_URL: ${BACKEND_URL:-http://localhost:1989}
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:

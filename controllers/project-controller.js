@@ -25,10 +25,13 @@ const createProject = async (projectInfo, userId) => {
     }
 };
 
-const editProject = async (projectId, newInfo) => {
+const editProject = async (projectId, newInfo, requestingUserId) => {
     try {
         const project = await Project.findByPk(projectId);
         if (!project) return dataLessResponse(404, "Project not found!");
+        if (String(project.userId) !== String(requestingUserId)) {
+            return dataLessResponse(403, "You do not have permission to modify this project!");
+        }
         project.set(newInfo);
         await project.save();
         return responseWithData(200, "Project edited successfully!", project);
@@ -37,11 +40,14 @@ const editProject = async (projectId, newInfo) => {
     }
 };
 
-const deleteProject = async (projectId) => {
+const deleteProject = async (projectId, requestingUserId) => {
     try {
         const project = await Project.findByPk(projectId);
         if (!project) {
             return dataLessResponse(404, "Project not found!");
+        }
+        if (String(project.userId) !== String(requestingUserId)) {
+            return dataLessResponse(403, "You do not have permission to delete this project!");
         }
         if (project.imageId) {
             try {
@@ -77,12 +83,15 @@ const getProject = async (projectId) => {
     }
 };
 
-const uploadProjectImage = async (projectId, fileBuffer, fileName) => {
+const uploadProjectImage = async (projectId, fileBuffer, fileName, requestingUserId) => {
     try {
         const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME;
         const project = await Project.findByPk(projectId);
         if (!project) {
             return dataLessResponse(404, "Project not found!");
+        }
+        if (String(project.userId) !== String(requestingUserId)) {
+            return dataLessResponse(403, "You do not have permission to modify this project!");
         }
 
         // Delete old project image if it exists
@@ -116,12 +125,15 @@ const uploadProjectImage = async (projectId, fileBuffer, fileName) => {
     }
 };
 
-const updateProjectImage = async (projectId, fileBuffer, fileName) => {
+const updateProjectImage = async (projectId, fileBuffer, fileName, requestingUserId) => {
     try {
         const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME;
         const project = await Project.findByPk(projectId);
         if (!project) {
             return dataLessResponse(404, "Project not found!");
+        }
+        if (String(project.userId) !== String(requestingUserId)) {
+            return dataLessResponse(403, "You do not have permission to modify this project!");
         }
 
         // Delete old project image if it exists

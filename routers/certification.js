@@ -13,7 +13,7 @@ app.post('/new-certification', authorize(), async (req, res) => {
 });
 
 app.put('/update/:certificationId', authorize(), async (req, res) => {
-    const { status, data } = await certificationModule.editCertification(req.params.certificationId, req.body);
+    const { status, data } = await certificationModule.editCertification(req.params.certificationId, req.body, retrieveId(req));
     res.status(status).json(data);
 });
 
@@ -33,7 +33,7 @@ app.get('/certification-item/:id', async (req, res) => {
 });
 
 app.delete('/:id', authorize(), async (req, res) => {
-    const { status, data } = await certificationModule.deleteCertification(req.params.id);
+    const { status, data } = await certificationModule.deleteCertification(req.params.id, retrieveId(req));
     res.status(status).json(data);
 });
 
