@@ -11,6 +11,7 @@ const fileRouter = require('./routers/file');
 const certificationRouter = require('./routers/certification');
 const newsletterRouter = require('./routers/newsletter');
 const adminRouter = require('./routers/admin');
+const { startDbKeepAlive } = require('./utils/db-keepalive');
 
 const allowedOrigins = require('./common/allowed-origins');
 
@@ -56,6 +57,8 @@ async function startServer() {
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on port ${PORT}`);
     });
+
+    startDbKeepAlive();
 
   } catch (err) {
     console.error('Unable to connect to DB:', err);

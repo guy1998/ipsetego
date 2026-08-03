@@ -1,21 +1,22 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config()
 
-
 const transporter = nodemailer.createTransport({
-  host: 'smtp.ionos.de',
-  port: 465,
-  secure: true,
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT) || 465,
+  secure: process.env.SMTP_SECURE !== 'false', // true unless explicitly disabled (set "false" for STARTTLS on port 587)
   auth: {
     user: process.env.SERVICE_EMAIL,
     pass: process.env.SERVICE_PASS,
   },
 });
 
+const FROM_EMAIL = process.env.SMTP_FROM || process.env.SERVICE_EMAIL;
+
 async function sendOtp(to, otp) {
   try {
     const info = await transporter.sendMail({
-      from: 'service@ipsetego.com',
+      from: FROM_EMAIL,
       to,
       subject: "Your OTP Code",
       html: `
@@ -43,7 +44,7 @@ async function sendOtp(to, otp) {
 async function sendContactEmail(to, fromName, fromSurname, fromEmail, subject, content) {
   try {
     const info = await transporter.sendMail({
-      from: 'service@ipsetego.com',
+      from: FROM_EMAIL,
       to,
       subject: subject,
       html: `
@@ -73,7 +74,7 @@ async function sendAdminAlert(adminEmails, unauthorizedEmail) {
   const emailList = Array.isArray(adminEmails) ? adminEmails.join(', ') : adminEmails;
   try {
     await transporter.sendMail({
-      from: 'service@ipsetego.com',
+      from: FROM_EMAIL,
       to: emailList,
       subject: '⚠️ Unauthorized Admin Login Attempt',
       html: `
@@ -102,7 +103,7 @@ async function sendAdminAlert(adminEmails, unauthorizedEmail) {
 async function sendDataRequestEmail(to, downloadLink) {
   try {
     const info = await transporter.sendMail({
-      from: 'service@ipsetego.com',
+      from: FROM_EMAIL,
       to,
       subject: 'Your Data Export — ipsetego',
       html: `
@@ -133,7 +134,7 @@ async function sendDataRequestEmail(to, downloadLink) {
 async function sendAccountDeletionEmail(to, zipBuffer) {
   try {
     const info = await transporter.sendMail({
-      from: 'service@ipsetego.com',
+      from: FROM_EMAIL,
       to,
       subject: 'Your ipsetego Account Has Been Deleted',
       html: `
@@ -169,7 +170,7 @@ async function sendAccountDeletionEmail(to, zipBuffer) {
 async function sendPasswordResetEmail(to, resetLink) {
   try {
     const info = await transporter.sendMail({
-      from: 'service@ipsetego.com',
+      from: FROM_EMAIL,
       to,
       subject: 'Reset your password — ipsetego',
       html: `

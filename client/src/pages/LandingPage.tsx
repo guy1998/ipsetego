@@ -1,6 +1,7 @@
-import React, { useRef, useState, Suspense, useCallback } from 'react';
+import React, { useRef, useState, Suspense } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Api } from '@/api/api';
+import { GITHUB_REPO_URL } from '@/lib/constants';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, Float, MeshDistortMaterial } from '@react-three/drei';
 import * as THREE from 'three';
@@ -9,17 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
-  Zap,
-  Users,
-  Code,
-  MessageSquare,
-  Sparkles,
-  TrendingUp,
-  Shield,
+  Boxes,
   CheckCircle,
   Github,
-  Linkedin,
-  Twitter,
+  BookOpen,
 } from 'lucide-react';
 
 // ─── 3D Scene Components ─────────────────────────────────────────────────────
@@ -115,60 +109,6 @@ function HeroScene() {
   );
 }
 
-// ─── Tilt Card ────────────────────────────────────────────────────────────────
-
-function TiltCard({
-  children,
-  className = '',
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const card = cardRef.current;
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    card.style.transform = `perspective(900px) rotateY(${x * 14}deg) rotateX(${-y * 14}deg) scale3d(1.03,1.03,1.03)`;
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    const card = cardRef.current;
-    if (!card) return;
-    card.style.transform = 'perspective(900px) rotateY(0deg) rotateX(0deg) scale3d(1,1,1)';
-  }, []);
-
-  return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className={className}
-      style={{ transition: 'transform 0.15s ease-out', willChange: 'transform' }}
-    >
-      {children}
-    </div>
-  );
-}
-
-// ─── Grid Background ──────────────────────────────────────────────────────────
-
-function GridBackground() {
-  return (
-    <div
-      className="pointer-events-none absolute inset-0 opacity-[0.07]"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(156,41,251,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(156,41,251,0.5) 1px, transparent 1px)',
-        backgroundSize: '60px 60px',
-      }}
-    />
-  );
-}
-
 // ─── Scanline Overlay ─────────────────────────────────────────────────────────
 
 function ScanlineOverlay() {
@@ -201,67 +141,6 @@ const LandingPage = () => {
     }
   };
 
-  const features = [
-    {
-      icon: <Sparkles className="w-6 h-6" />,
-      title: 'AI-Powered Chat',
-      description: 'Let prospects interact with an intelligent AI that knows everything about your projects and experience.',
-    },
-    {
-      icon: <Code className="w-6 h-6" />,
-      title: 'Showcase Your Work',
-      description: 'Display your projects, code samples, and technical achievements in an interactive format.',
-    },
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: 'Impress Employers',
-      description: 'Stand out with a unique, modern portfolio that engages rather than just informs.',
-    },
-    {
-      icon: <MessageSquare className="w-6 h-6" />,
-      title: 'Real-time Interaction',
-      description: 'Answer questions, discuss your experience, and build connections instantly.',
-    },
-    {
-      icon: <TrendingUp className="w-6 h-6" />,
-      title: 'Track Engagement',
-      description: 'See who visited your portfolio and what they were most interested in.',
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: 'Privacy First',
-      description: 'Control what information is shared and maintain complete privacy over your data.',
-    },
-  ];
-
-  const steps = [
-    { number: '01', title: 'Sign Up', description: 'Create your account in minutes. No credit card required.' },
-    { number: '02', title: 'Build Your Portfolio', description: 'Add your projects, experience, and CV. Customize everything.' },
-    { number: '03', title: 'Train Your AI', description: 'Our AI learns from your portfolio to answer any question about you.' },
-    { number: '04', title: 'Share Your Link', description: 'Send your portfolio link to employers and start conversations.' },
-  ];
-
-  const testimonials = [
-    {
-      name: 'Sarah Chen',
-      role: 'Senior Developer at TechCorp',
-      content: 'ipsetego helped me stand out from thousands of applicants. The AI-powered chat was a game-changer during my job search.',
-      avatar: '👩‍💻',
-    },
-    {
-      name: 'Marcus Johnson',
-      role: 'Full-Stack Engineer',
-      content: 'Employers were impressed with how I could showcase my projects interactively. Got 3 offers in a month!',
-      avatar: '👨‍💼',
-    },
-    {
-      name: 'Emily Rodriguez',
-      role: 'Product Designer',
-      content: 'Finally, a portfolio that truly represents my skills. The modern design and interactive experience impressed everyone I spoke with.',
-      avatar: '👩‍🎨',
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
 
@@ -286,29 +165,22 @@ const LandingPage = () => {
               </span>
             </div>
 
-            {/* Nav Links */}
-            <div className="hidden md:flex items-center space-x-8">
-              {['Features', 'How It Works', 'Testimonials'].map((label) => (
-                <a
-                  key={label}
-                  href={`#${label.toLowerCase().replace(/\s+/g, '-')}`}
-                  className="text-sm font-medium transition-colors duration-200"
-                  style={{ color: 'rgba(220,200,255,0.7)' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = '#b06bff')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(220,200,255,0.7)')}
-                >
-                  {label}
-                </a>
-              ))}
-            </div>
-
             {/* Actions */}
             <div className="flex items-center space-x-3">
+              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/40 text-primary hover:bg-primary/10"
+                >
+                  <Github className="w-4 h-4 mr-2" /> GitHub
+                </Button>
+              </a>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigate('/login')}
-                className="border-primary/40 text-primary hover:bg-primary/10"
+                className="border-primary/40 text-primary hover:bg-primary/10 hidden sm:inline-flex"
               >
                 Sign In
               </Button>
@@ -321,7 +193,7 @@ const LandingPage = () => {
                 }}
                 className="hover:opacity-90 transition-opacity"
               >
-                Get Started
+                Sign Up
               </Button>
             </div>
           </div>
@@ -363,8 +235,8 @@ const LandingPage = () => {
                   boxShadow: '0 0 20px rgba(156,41,251,0.2)',
                 }}
               >
-                <Zap className="w-3.5 h-3.5" />
-                The Future of Professional Portfolios
+                <Boxes className="w-3.5 h-3.5" />
+                Open Source · Self-Hosted
               </span>
             </div>
 
@@ -381,7 +253,7 @@ const LandingPage = () => {
                     filter: 'drop-shadow(0 0 30px rgba(156,41,251,0.4))',
                   }}
                 >
-                  Build Your Intelligent
+                  Your Portfolio.
                 </span>
                 <span
                   className="block"
@@ -393,27 +265,28 @@ const LandingPage = () => {
                     filter: 'drop-shadow(0 0 30px rgba(168,85,247,0.4))',
                   }}
                 >
-                  Interactive Portfolio
+                  Self-Hosted. AI-Powered.
                 </span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed" style={{ color: 'rgba(200,180,230,0.7)' }}>
-                Let employers chat with your AI-powered portfolio. Showcase your projects, experience, and skills in real-time conversations that actually impress.
+                Express, React, and an LLM chat that knows your work. Clone it, run it, own it.
               </p>
             </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button
-                size="lg"
-                className="text-base h-12 px-8 font-semibold"
-                style={{
-                  background: 'linear-gradient(135deg, #9c29fb, #6a11cb)',
-                  boxShadow: '0 0 30px rgba(156,41,251,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
-                }}
-                onClick={() => navigate('/sign-up')}
-              >
-                Start Building Free <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+                <Button
+                  size="lg"
+                  className="text-base h-12 px-8 font-semibold w-full sm:w-auto"
+                  style={{
+                    background: 'linear-gradient(135deg, #9c29fb, #6a11cb)',
+                    boxShadow: '0 0 30px rgba(156,41,251,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+                  }}
+                >
+                  <Github className="w-4 h-4 mr-2" /> View on GitHub <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </a>
               <Button
                 variant="outline"
                 size="lg"
@@ -432,7 +305,7 @@ const LandingPage = () => {
 
             {/* Trust Badges */}
             <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-6 text-sm" style={{ color: 'rgba(180,160,210,0.6)' }}>
-              {['No credit card required', 'Takes 5 minutes to set up', 'Join a community of futurists'].map((text) => (
+              {['Docker-ready', 'Bring your own LLM', 'Your server, your data'].map((text) => (
                 <div key={text} className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4" style={{ color: '#9c29fb' }} />
                   <span>{text}</span>
@@ -445,213 +318,6 @@ const LandingPage = () => {
         {/* Bottom fade */}
         <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
           style={{ background: 'linear-gradient(to bottom, transparent, #0a0714)' }} />
-      </section>
-
-      {/* ── Features Section ─────────────────────────────────────────────── */}
-      <section
-        id="features"
-        className="relative py-24 px-4 overflow-hidden"
-        style={{ background: '#080612' }}
-      >
-        <GridBackground />
-
-        {/* Glow accents */}
-        <div className="pointer-events-none absolute top-0 left-1/4 w-96 h-96 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #9c29fb, transparent)', filter: 'blur(60px)' }} />
-        <div className="pointer-events-none absolute bottom-0 right-1/4 w-96 h-96 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #6a11cb, transparent)', filter: 'blur(60px)' }} />
-
-        <div className="relative z-10 max-w-6xl mx-auto">
-          <div className="text-center mb-16 space-y-4">
-            <span
-              className="inline-block text-xs font-semibold tracking-[0.3em] uppercase px-3 py-1 rounded-full"
-              style={{ color: '#9c29fb', border: '1px solid rgba(156,41,251,0.3)', background: 'rgba(156,41,251,0.08)' }}
-            >
-              Capabilities
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#e8d4ff' }}>
-              Powerful Features
-            </h2>
-            <p className="text-lg max-w-2xl mx-auto" style={{ color: 'rgba(180,160,210,0.6)' }}>
-              Everything you need to create an impressive, interactive portfolio that stands out.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <TiltCard key={index}>
-                <div
-                  className="p-6 rounded-2xl h-full group cursor-default"
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(156,41,251,0.2)',
-                    backdropFilter: 'blur(12px)',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-                    transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(156,41,251,0.6)';
-                    e.currentTarget.style.boxShadow = '0 4px 40px rgba(156,41,251,0.2), 0 0 0 1px rgba(156,41,251,0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(156,41,251,0.2)';
-                    e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,0,0,0.3)';
-                  }}
-                >
-                  {/* Icon */}
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
-                    style={{
-                      background: 'rgba(156,41,251,0.12)',
-                      border: '1px solid rgba(156,41,251,0.25)',
-                      color: '#b06bff',
-                      boxShadow: '0 0 16px rgba(156,41,251,0.15)',
-                    }}
-                  >
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2" style={{ color: '#e8d4ff' }}>{feature.title}</h3>
-                  <p style={{ color: 'rgba(180,160,210,0.6)', lineHeight: '1.6' }}>{feature.description}</p>
-                </div>
-              </TiltCard>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How It Works ─────────────────────────────────────────────────── */}
-      <section
-        id="how-it-works"
-        className="relative py-24 px-4 overflow-hidden"
-        style={{ background: 'linear-gradient(180deg, #080612 0%, #0d0a1f 100%)' }}
-      >
-        {/* Horizontal glow line */}
-        <div className="pointer-events-none absolute top-1/2 left-0 right-0 h-px opacity-30"
-          style={{ background: 'linear-gradient(90deg, transparent, #9c29fb, transparent)' }} />
-
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="text-center mb-16 space-y-4">
-            <span
-              className="inline-block text-xs font-semibold tracking-[0.3em] uppercase px-3 py-1 rounded-full"
-              style={{ color: '#9c29fb', border: '1px solid rgba(156,41,251,0.3)', background: 'rgba(156,41,251,0.08)' }}
-            >
-              Process
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#e8d4ff' }}>How It Works</h2>
-            <p className="text-lg max-w-2xl mx-auto" style={{ color: 'rgba(180,160,210,0.6)' }}>
-              Get started in just 4 simple steps.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map((step, index) => (
-              <div key={index} className="relative">
-                <TiltCard>
-                  <div
-                    className="p-6 rounded-2xl h-full relative overflow-hidden"
-                    style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(156,41,251,0.2)',
-                      backdropFilter: 'blur(12px)',
-                    }}
-                  >
-                    {/* Step number with glow */}
-                    <div
-                      className="text-5xl font-bold mb-4 leading-none"
-                      style={{
-                        background: 'linear-gradient(135deg, #9c29fb, #6a11cb)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        filter: 'drop-shadow(0 0 12px rgba(156,41,251,0.6))',
-                      }}
-                    >
-                      {step.number}
-                    </div>
-                    <h3 className="text-xl font-semibold mb-2" style={{ color: '#e8d4ff' }}>{step.title}</h3>
-                    <p style={{ color: 'rgba(180,160,210,0.6)', lineHeight: '1.6' }}>{step.description}</p>
-                    {/* Corner accent */}
-                    <div
-                      className="absolute top-0 right-0 w-16 h-16 opacity-20"
-                      style={{
-                        background: 'radial-gradient(circle at top right, #9c29fb, transparent)',
-                      }}
-                    />
-                  </div>
-                </TiltCard>
-
-                {/* Connector */}
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:flex absolute top-8 -right-3 z-20 items-center">
-                    <div className="w-6 h-px" style={{ background: 'linear-gradient(90deg, #9c29fb, rgba(156,41,251,0.2))' }} />
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#9c29fb', boxShadow: '0 0 6px #9c29fb' }} />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Testimonials ─────────────────────────────────────────────────── */}
-      <section
-        id="testimonials"
-        className="relative py-24 px-4 overflow-hidden"
-        style={{ background: '#080612' }}
-      >
-        <GridBackground />
-
-        <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[300px] opacity-10 rounded-full"
-          style={{ background: 'radial-gradient(ellipse, #9c29fb, transparent)', filter: 'blur(80px)' }} />
-
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="text-center mb-16 space-y-4">
-            <span
-              className="inline-block text-xs font-semibold tracking-[0.3em] uppercase px-3 py-1 rounded-full"
-              style={{ color: '#9c29fb', border: '1px solid rgba(156,41,251,0.3)', background: 'rgba(156,41,251,0.08)' }}
-            >
-              Testimonials
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#e8d4ff' }}>What Users Say</h2>
-            <p className="text-lg max-w-2xl mx-auto" style={{ color: 'rgba(180,160,210,0.6)' }}>
-              Join hundreds of developers who've already landed their dream jobs using ipsetego.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((testimonial, index) => (
-              <TiltCard key={index}>
-                <div
-                  className="p-6 rounded-2xl h-full"
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(156,41,251,0.2)',
-                    backdropFilter: 'blur(16px)',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                  }}
-                >
-                  {/* Quote mark */}
-                  <div className="text-4xl font-serif mb-3 leading-none" style={{ color: 'rgba(156,41,251,0.4)' }}>"</div>
-                  <p className="mb-6 italic leading-relaxed" style={{ color: 'rgba(200,180,230,0.7)' }}>
-                    {testimonial.content}
-                  </p>
-                  <div className="flex items-center space-x-3 pt-4" style={{ borderTop: '1px solid rgba(156,41,251,0.15)' }}>
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-                      style={{ background: 'rgba(156,41,251,0.15)', border: '1px solid rgba(156,41,251,0.3)' }}
-                    >
-                      {testimonial.avatar}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm" style={{ color: '#e8d4ff' }}>{testimonial.name}</p>
-                      <p className="text-xs" style={{ color: 'rgba(180,160,210,0.5)' }}>{testimonial.role}</p>
-                    </div>
-                  </div>
-                </div>
-              </TiltCard>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* ── Newsletter ───────────────────────────────────────────────────── */}
@@ -670,16 +336,46 @@ const LandingPage = () => {
 
         <div className="relative z-10 max-w-2xl mx-auto text-center space-y-8">
           <div className="space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#e8d4ff' }}>Stay Updated</h2>
+            <h2 className="text-3xl md:text-4xl font-bold" style={{ color: '#e8d4ff' }}>Get Involved</h2>
             <p className="text-lg" style={{ color: 'rgba(180,160,210,0.6)' }}>
-              Get the latest tips on building an impressive portfolio and new ipsetego features.
+              Star the repo to keep up with releases, open an issue if something's broken, or send a PR.
             </p>
           </div>
 
-          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+              <Button
+                size="lg"
+                className="text-base h-12 px-8 font-semibold w-full sm:w-auto"
+                style={{
+                  background: 'linear-gradient(135deg, #9c29fb, #6a11cb)',
+                  boxShadow: '0 0 20px rgba(156,41,251,0.4)',
+                }}
+              >
+                <Github className="w-4 h-4 mr-2" /> Star on GitHub
+              </Button>
+            </a>
+            <a href={`${GITHUB_REPO_URL}#readme`} target="_blank" rel="noopener noreferrer">
+              <Button
+                variant="outline"
+                size="lg"
+                className="text-base h-12 px-8 w-full sm:w-auto"
+                style={{
+                  borderColor: 'rgba(156,41,251,0.5)',
+                  color: '#d0a0ff',
+                  background: 'rgba(156,41,251,0.06)',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                <BookOpen className="w-4 h-4 mr-2" /> Read the Docs
+              </Button>
+            </a>
+          </div>
+
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto pt-4">
             <input
               type="email"
-              placeholder="Enter your email"
+              placeholder="Or get an email on new releases"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -695,10 +391,12 @@ const LandingPage = () => {
             />
             <Button
               type="submit"
+              variant="outline"
               className="px-6 font-semibold"
               style={{
-                background: 'linear-gradient(135deg, #9c29fb, #6a11cb)',
-                boxShadow: '0 0 20px rgba(156,41,251,0.4)',
+                borderColor: 'rgba(156,41,251,0.4)',
+                color: '#d0a0ff',
+                background: 'rgba(156,41,251,0.04)',
               }}
             >
               Subscribe
@@ -717,7 +415,7 @@ const LandingPage = () => {
         }}
       >
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             {/* Brand */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
@@ -733,13 +431,11 @@ const LandingPage = () => {
                 <span className="font-bold" style={{ color: '#e8d4ff' }}>ipsetego</span>
               </div>
               <p className="text-sm" style={{ color: 'rgba(180,160,210,0.5)' }}>
-                Build your intelligent portfolio and impress employers.
+                Open-source, self-hosted portfolio platform with an AI-powered chat.
               </p>
               <div className="flex space-x-3">
                 {[
-                  { icon: <Github className="w-4 h-4" />, href: 'https://github.com' },
-                  { icon: <Linkedin className="w-4 h-4" />, href: 'https://linkedin.com' },
-                  { icon: <Twitter className="w-4 h-4" />, href: 'https://twitter.com' },
+                  { icon: <Github className="w-4 h-4" />, href: GITHUB_REPO_URL },
                 ].map((s, i) => (
                   <a
                     key={i}
@@ -771,13 +467,13 @@ const LandingPage = () => {
               </div>
             </div>
 
-            {/* Product */}
+            {/* Community */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-sm tracking-wider uppercase" style={{ color: 'rgba(156,41,251,0.8)' }}>Product</h3>
-              <ul className="space-y-2 text-sm" style={{ color: 'rgba(180,160,210,0.5)' }}>
-                {[['Features', '#features'], ['Roadmap', '#']].map(([label, href]) => (
+              <h3 className="font-semibold text-sm tracking-wider uppercase" style={{ color: 'rgba(156,41,251,0.8)' }}>Community</h3>
+              <ul className="space-y-2 text-sm">
+                {[['Star on GitHub', GITHUB_REPO_URL], ['Issues', `${GITHUB_REPO_URL}/issues`], ['Discussions', `${GITHUB_REPO_URL}/discussions`]].map(([label, href]) => (
                   <li key={label}>
-                    <a href={href} className="hover:text-primary transition-colors duration-200" style={{ color: 'inherit' }}
+                    <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(180,160,210,0.5)' }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = '#b06bff')}
                       onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(180,160,210,0.5)')}>
                       {label}
@@ -787,29 +483,13 @@ const LandingPage = () => {
               </ul>
             </div>
 
-            {/* Company */}
+            {/* Docs */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-sm tracking-wider uppercase" style={{ color: 'rgba(156,41,251,0.8)' }}>Company</h3>
+              <h3 className="font-semibold text-sm tracking-wider uppercase" style={{ color: 'rgba(156,41,251,0.8)' }}>Docs</h3>
               <ul className="space-y-2 text-sm">
-                {[['About', '#'], ['Blog', '#'], ['Careers', '#']].map(([label, href]) => (
+                {[['README', `${GITHUB_REPO_URL}#readme`], ['License', `${GITHUB_REPO_URL}/blob/main/LICENSE`]].map(([label, href]) => (
                   <li key={label}>
-                    <a href={href} style={{ color: 'rgba(180,160,210,0.5)' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = '#b06bff')}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(180,160,210,0.5)')}>
-                      {label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-sm tracking-wider uppercase" style={{ color: 'rgba(156,41,251,0.8)' }}>Legal</h3>
-              <ul className="space-y-2 text-sm">
-                {[['Privacy Policy', '#'], ['Terms of Service', '#'], ['Contact Us', '#']].map(([label, href]) => (
-                  <li key={label}>
-                    <a href={href} style={{ color: 'rgba(180,160,210,0.5)' }}
+                    <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(180,160,210,0.5)' }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = '#b06bff')}
                       onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(180,160,210,0.5)')}>
                       {label}
@@ -824,15 +504,13 @@ const LandingPage = () => {
             className="pt-8 flex flex-col md:flex-row items-center justify-between text-sm"
             style={{ borderTop: '1px solid rgba(156,41,251,0.1)', color: 'rgba(180,160,210,0.35)' }}
           >
-            <p>&copy; 2024 ipsetego. All rights reserved.</p>
+            <p>ipsetego — open source, self-hosted.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              {['Privacy', 'Terms', 'Status'].map((label) => (
-                <a key={label} href="#"
-                  onMouseEnter={(e) => (e.currentTarget.style.color = '#b06bff')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(180,160,210,0.35)')}>
-                  {label}
-                </a>
-              ))}
+              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer"
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#b06bff')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(180,160,210,0.35)')}>
+                github.com/guy1998/ipsetego
+              </a>
             </div>
           </div>
         </div>

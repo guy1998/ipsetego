@@ -1,7 +1,56 @@
 import { Api } from "@/api/api.ts";
 import "../assets/styles/LoginPage.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { GITHUB_REPO_URL } from "@/lib/constants";
+
+function SignUpsDisabled() {
+    return (
+        <div className="login-page">
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+            <div className="login-bg-blob" />
+
+            <div className="login-container">
+                <div className="login-card">
+                    <a href="/" className="login-logo">
+                        <div className="login-logo-icon">
+                            <span>ip</span>
+                        </div>
+                        <span className="login-logo-name">ipsetego</span>
+                    </a>
+
+                    <header className="login-header">
+                        <h1 className="login-title">Sign-ups are closed</h1>
+                    </header>
+
+                    <div className="success-message">
+                        <p className="success-text">
+                            This instance isn't accepting new accounts right now.
+                        </p>
+                        <p className="success-instruction">
+                            ipsetego is open source — self-host it to create your own account, or star the repo to keep up with new releases.
+                        </p>
+
+                        <div className="success-actions">
+                            <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" className="login-btn">
+                                ⭐ Star on GitHub
+                            </a>
+                        </div>
+
+                        <div className="login-redirect">
+                            <p>
+                                Already have an account? <a href="/login" className="forgot-link">Sign In</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 function SignUpPage() {
     const [formData, setFormData] = useState({
@@ -16,8 +65,15 @@ function SignUpPage() {
     const [confirmPassword, setConfirmPassword] = useState("")
     const [isLoading, setIsLoading] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
+    const [signupsEnabled, setSignupsEnabled] = useState<boolean | null>(null);
     const { toast } = useToast();
     const api = Api.getInstance();
+
+    useEffect(() => {
+        api.get('/auth/signup-status')
+            .then((res) => setSignupsEnabled(res.data.enabled))
+            .catch(() => setSignupsEnabled(true));
+    }, []);
 
     const checkData = (data: any) => {
         return (data.name &&
@@ -103,6 +159,14 @@ function SignUpPage() {
             setIsLoading(false);
         }
     };
+
+    if (signupsEnabled === null) {
+        return <div className="login-page" />;
+    }
+
+    if (!signupsEnabled) {
+        return <SignUpsDisabled />;
+    }
 
     if (showOtp) {
         return <OtpPage email={formData.email} />;

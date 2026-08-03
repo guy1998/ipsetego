@@ -27,4 +27,10 @@ app.post('/confirm', requireSignupsEnabled, otpLimiter, authModule.confirmRegist
 
 app.get('/authorize', authorize(), (req, res) => res.status(200).json({ message: "Session valid!" }));
 
+// Lets the frontend know whether it should render the sign-up flow at all —
+// see SIGNUPS_ENABLED in .env.example.
+app.get('/signup-status', (req, res) => {
+    res.status(200).json({ enabled: process.env.SIGNUPS_ENABLED !== 'false' });
+});
+
 module.exports = app;

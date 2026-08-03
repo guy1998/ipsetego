@@ -23,12 +23,12 @@ Open `.env` and fill in, at minimum:
 | `JWT_KEY` | the app to start | any long random string |
 | `ENCRYPTION_KEY` | the app to start | exactly 64 hex chars — generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_BUCKET_NAME` | the app to start | the backend fails to boot without these — create a free [Supabase](https://supabase.com) project and storage bucket |
-| `SERVICE_EMAIL`, `SERVICE_PASS` | signup OTPs, password reset, contact form | SMTP account credentials (see note below) |
+| `SMTP_HOST`, `SERVICE_EMAIL`, `SERVICE_PASS` | signup OTPs, password reset, contact form | any SMTP account (Gmail, IONOS, SendGrid, etc.) — see `SMTP_*` vars below |
 | `ADMIN_WHITELIST` | admin panel access | comma-separated emails allowed to log into `admin-client` |
 
 Everything else in `.env.example` has a sensible default for local use. `DATABASE_HOST` can stay as `localhost` in the file — `docker-compose.yml` overrides it to reach the database container automatically.
 
-> **SMTP note**: `utils/mailer.js` connects to `smtp.ionos.de`. If you use a different provider (Gmail, SendGrid, etc.), edit the `host` in that file to match — it isn't (yet) an env var.
+**SMTP config**: `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` point at your provider, `SERVICE_EMAIL` / `SERVICE_PASS` are the account credentials, and `SMTP_FROM` is the "from" address on outgoing mail (defaults to `SERVICE_EMAIL`). Leave `SMTP_SECURE=true` for implicit-TLS ports like 465; set it to `false` for STARTTLS ports like 587.
 
 ### 2. Start everything
 
@@ -99,6 +99,19 @@ cp .env.example .env    # VITE_BACKEND_URL=http://localhost:1989
 npm run dev              # http://localhost:8081
 ```
 
+## Public signup
+
+Self-signup (`/auth/register`, `/auth/confirm`) can be turned off for single-user deployments by setting `SIGNUPS_ENABLED=false` in `.env` — the backend then rejects both routes with a 403.
+
+The `client` frontend checks this before rendering the sign-up form:
+
+```
+GET /auth/signup-status
+→ { "enabled": true | false }
+```
+
+No auth required. When `enabled` is `false`, the `/sign-up` page skips the form entirely and shows a "star the repo" link instead of a dead-end signup UI.
+
 ## Admin access
 
 There's no separate admin signup — any email listed in `ADMIN_WHITELIST` (comma-separated, in `.env`) can log into `admin-client` via a one-time code sent to that email. Regular user accounts (created through the public signup flow) never get admin rights, regardless of what's requested in the API — `role` is server-controlled.
@@ -116,6 +129,13 @@ npm run migrate          # apply pending migrations
 npm run migrate:undo     # roll back the last migration
 npm run makemigrations   # generate a migration from model changes
 ```
+
+## Free-tier database keep-alive
+
+Free-tier Postgres providers (Supabase, Neon, Render, etc.) commonly pause or suspend the database after a period of inactivity. The backend runs a small cron job (`utils/db-keepalive.js`) that pings the DB with `SELECT 1` on a schedule to keep it awake — on by default. Configure it in `.env`:
+
+- `DB_KEEPALIVE_ENABLED` — set to `false` to turn it off (e.g. on a paid/always-on database)
+- `DB_KEEPALIVE_CRON` — standard cron syntax, default `*/5 * * * *` (every 5 minutes)
 
 In Docker, migrations run automatically every time the `backend` container starts (`docker-entrypoint.sh`) — safe to re-run, already-applied migrations are skipped.
 
