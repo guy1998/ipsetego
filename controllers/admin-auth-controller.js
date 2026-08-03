@@ -19,7 +19,6 @@ const adminLogin = async (req, res) => {
 
         const normalizedEmail = email.trim().toLowerCase();
         const whitelist = getAdminWhitelist();
-
         if (!whitelist.includes(normalizedEmail)) {
             // Alert all admins about unauthorized attempt
             await sendAdminAlert(whitelist, email);

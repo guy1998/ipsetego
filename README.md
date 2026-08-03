@@ -112,6 +112,16 @@ GET /auth/signup-status
 
 No auth required. When `enabled` is `false`, the `/sign-up` page skips the form entirely and shows a "star the repo" link instead of a dead-end signup UI.
 
+### Creating the first (non-admin) user
+
+There's no seed script or CLI for creating a regular user — the only path is the public signup form, which is why `SIGNUPS_ENABLED` starts out relevant even on single-user deployments. To create your first user:
+
+1. Set `SIGNUPS_ENABLED=true` in `.env` (or leave it unset — it defaults to enabled).
+2. Start the backend and sign up through the `client` frontend's `/sign-up` page.
+3. Set `SIGNUPS_ENABLED=false` and restart the backend to close registration again.
+
+Admin accounts don't go through this flow at all — they're granted purely by email via `ADMIN_WHITELIST` in `.env`, checked at login time in `adminLogin`.
+
 ## Admin access
 
 There's no separate admin signup — any email listed in `ADMIN_WHITELIST` (comma-separated, in `.env`) can log into `admin-client` via a one-time code sent to that email. Regular user accounts (created through the public signup flow) never get admin rights, regardless of what's requested in the API — `role` is server-controlled.
