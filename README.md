@@ -86,16 +86,44 @@ different API, add a repository variable named `VITE_BACKEND_URL`
 
 ## Deploying to a server with HTTPS
 
-`docker-compose.prod.yml` runs the published images behind
-[Caddy](https://caddyserver.com), which obtains and renews Let's Encrypt
-certificates automatically and redirects HTTP to HTTPS. Only Caddy publishes
-ports; Postgres, the API and both frontends stay on the internal network.
+This stack is designed to share a server with other apps. One
+[Caddy](https://caddyserver.com) container at the root of the server owns ports
+80 and 443, terminates TLS for every app on the box, and obtains and renews
+Let's Encrypt certificates automatically. Each app is a self-contained Compose
+project that publishes **no** ports at all — it joins a shared Docker network
+called `edge` and contributes one site file to the proxy.
 
-| Domain | Serves |
-|---|---|
-| `ipsetego.com` (+ `www` → apex redirect) | `client` |
-| `app.ipsetego.com` | `admin-client` |
-| `api.ipsetego.com` | `backend` |
+```
+/opt/stacks/
+├── docker-compose.yml      # the shared Caddy — see step 3
+├── Caddyfile               # global options + `import sites/*.caddy`
+├── sites/
+│   ├── busulla.caddy       # one site file per app
+│   └── ipsetego.caddy      # this app's three hostnames — see step 6
+├── busulla/
+│   ├── docker-compose.yml
+│   └── .env
+└── ipsetego/               # this repo
+    ├── docker-compose.prod.yml
+    └── .env
+```
+
+Adding an app later means three things and never touching another app: attach
+its public services to `edge`, drop an `<app>.caddy` into `sites/`, and reload
+Caddy. Reloading is graceful — running sites keep serving while the new
+certificate is fetched.
+
+| Domain | Serves | Upstream alias |
+|---|---|---|
+| `ipsetego.com` (+ `www` → apex redirect) | `client` | `ipsetego-client:80` |
+| `app.ipsetego.com` | `admin-client` | `ipsetego-admin:80` |
+| `api.ipsetego.com` | `backend` | `ipsetego-backend:1989` |
+
+Those aliases are declared in `docker-compose.prod.yml` and consumed by the
+proxy's `sites/ipsetego.caddy`. They're prefixed on purpose: Compose also registers the
+bare service name (`backend`, `client`) on every network a service joins, and on
+a shared network two apps would collide on those. Prefixed aliases are
+unambiguous, so every new app should follow the same convention.
 
 The API needs its own hostname because auth cookies are issued with
 `Secure; SameSite=None` — both frontends can talk to it cross-origin, but
@@ -116,10 +144,10 @@ Contabo server's IPv4:
 
 Add matching `AAAA` records if your server has IPv6. If a `CAA` record exists,
 make sure it allows `letsencrypt.org`, or delete it. Wait until
-`dig +short ipsetego.com` returns your server IP **before** starting the stack —
-Caddy fails the certificate challenge otherwise.
+`dig +short ipsetego.com` returns your server IP **before** loading the site
+file — Caddy fails the certificate challenge otherwise.
 
-### 2. Prepare the Contabo server
+### 2. Prepare the server
 
 ```bash
 ssh root@<contabo-ipv4>
@@ -127,24 +155,106 @@ ssh root@<contabo-ipv4>
 # Docker
 curl -fsSL https://get.docker.com | sh
 
-# Firewall — 80/443 must be open for Let's Encrypt and for the app
+# Firewall — 80/443 must be open for Let's Encrypt and for the apps
 ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw enable
 ```
 
 Contabo also has a firewall in its own customer panel on some plans — if yours
 does, open 80 and 443 there too.
 
-### 3. Fetch the deployment files
+### 3. Set up the shared proxy (once per server)
+
+Skip to step 4 if the root `docker-compose.yml` and `Caddyfile` are already
+there from a previous app.
+
+The proxy is server infrastructure, not part of this repo — these two files are
+written by hand, once, and then shared by every app on the box.
 
 ```bash
-mkdir -p /opt/ipsetego && cd /opt/ipsetego
+docker network create edge
+mkdir -p /opt/stacks/sites && cd /opt/stacks
+```
+
+`/opt/stacks/docker-compose.yml`:
+
+```yaml
+name: edge
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sites:/etc/caddy/sites:ro
+      # Certificates and the ACME account key. Deleting this volume means
+      # re-issuing everything from scratch, which is rate limited — keep it.
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - edge
+
+networks:
+  edge:
+    external: true
+
+volumes:
+  caddy-data:
+  caddy-config:
+```
+
+`/opt/stacks/Caddyfile` — global options only, so adding or removing an app
+never means editing it:
+
+```
+{
+	email you@example.com
+}
+
+# One file per app. The glob has to match at least one file, so keep a site
+# in sites/ before the first `up`.
+import sites/*.caddy
+```
+
+Both paths are bind mounts, and Docker silently creates a *directory* for any
+that doesn't exist — if `up` fails with "not a directory", that's why. Watch the
+capitalisation too: `CaddyFile` won't match `./Caddyfile` on Linux.
+
+If the server currently runs a per-app Caddy, that one holds ports 80/443. Stop
+it, move its site block into `sites/`, and edit its stack to join `edge`: delete
+the `caddy` service and its volumes, drop the `ports:` mapping, and give the
+public service a prefixed alias. A frontend that proxies to a backend in its own
+stack must list `default:` alongside `edge:` — naming any network replaces the
+implicit default, and dropping it breaks that internal hop.
+
+```bash
+cd /opt/stacks/busulla
+docker compose down --remove-orphans    # frees 80/443; --remove-orphans clears
+                                        # the retired caddy container
+nano docker-compose.yml
+docker compose up -d
+```
+
+Certificates re-issue from scratch under the new proxy, because it has its own
+`caddy-data` volume. That's a handful of Let's Encrypt requests — well inside the
+rate limits — but don't repeat it needlessly.
+
+### 4. Fetch this app
+
+```bash
+mkdir -p /opt/stacks/ipsetego && cd /opt/stacks/ipsetego
 git clone https://github.com/guy1998/ipsetego.git .
 ```
 
-(Only `docker-compose.prod.yml`, `Caddyfile` and `.env` are actually needed —
-nothing is built on the server.)
+(Only `docker-compose.prod.yml` and `.env` are actually needed — nothing is
+built on the server.)
 
-### 4. Configure `.env`
+### 5. Configure `.env`
 
 ```bash
 cp .env.example .env
@@ -163,13 +273,14 @@ DATABASE_PASS=<a long random password>
 JWT_KEY=<64 random hex chars>
 ENCRYPTION_KEY=<exactly 64 hex chars>
 
-APP_DOMAIN=ipsetego.com
-ADMIN_DOMAIN=app.ipsetego.com
-API_DOMAIN=api.ipsetego.com
-ACME_EMAIL=<your email, for Let's Encrypt expiry notices>
 GHCR_OWNER=guy1998
 IMAGE_TAG=latest
 ```
+
+The domains aren't in `.env` — they live in the proxy's `sites/ipsetego.caddy`
+(step 6), because one shared Caddy can't take a single app's environment. Moving
+the app to different hostnames means editing that file, the three URLs above,
+and the `VITE_BACKEND_URL` build arg in the workflow.
 
 Generate the secrets with:
 
@@ -180,7 +291,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 Then `chmod 600 .env`.
 
-### 5. Start it
+### 6. Start it
 
 If the GHCR packages are private, log in first — otherwise skip this:
 
@@ -193,12 +304,49 @@ GitHub → your profile → Packages → each `ipsetego-*` package → Package s
 Change visibility → Public.
 
 ```bash
+cd /opt/stacks/ipsetego
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
-docker compose -f docker-compose.prod.yml logs -f caddy   # watch certificates being issued
 ```
 
-Migrations run automatically when the `backend` container starts.
+Migrations run automatically when the `backend` container starts. Now hand the
+domains to the proxy — `/opt/stacks/sites/ipsetego.caddy`:
+
+```
+ipsetego.com, www.ipsetego.com {
+	encode zstd gzip
+
+	# Serve the apex domain, redirect www to it so there's one canonical origin.
+	@www host www.ipsetego.com
+	redir @www https://ipsetego.com{uri} permanent
+
+	reverse_proxy ipsetego-client:80
+}
+
+app.ipsetego.com {
+	encode zstd gzip
+	reverse_proxy ipsetego-admin:80
+}
+
+api.ipsetego.com {
+	encode zstd gzip
+
+	# Keep the port in step with PORT in .env, and don't buffer — portfolio
+	# media (CVs, project images) can be large.
+	reverse_proxy ipsetego-backend:1989 {
+		flush_interval -1
+	}
+}
+```
+
+Caddy resolves those upstreams per request, so the file is valid even while the
+stack is down. Load it:
+
+```bash
+cd /opt/stacks
+docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+docker compose logs -f caddy    # watch certificates being issued
+```
 
 Verify:
 
@@ -208,26 +356,32 @@ curl -I https://app.ipsetego.com
 curl -I https://api.ipsetego.com/auth/signup-status
 ```
 
-### 6. Updating after a push to `main`
+### 7. Updating after a push to `main`
 
 Wait for the workflow to finish, then on the server:
 
 ```bash
-cd /opt/ipsetego
+cd /opt/stacks/ipsetego
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 docker image prune -f
 ```
+
+The proxy isn't involved — it resolves the upstream aliases per request, so
+containers can be replaced underneath it without a reload. Only edits to
+`sites/*.caddy` need one.
 
 Pin a specific build instead of tracking `latest` by setting
 `IMAGE_TAG=sha-abc1234` (or a release tag like `1.2.0`) in `.env`.
 
 ### Notes
 
-- **Backups**: the database lives in the `db-data` volume. Dump it with
+- **Backups**: the database lives in the `ipsetego_db-data` volume. Dump it with
   `docker compose -f docker-compose.prod.yml exec db pg_dump -U postgres ipsetego > backup.sql`.
-- **Certificates**: stored in the `caddy-data` volume, so they survive restarts.
-  Don't wipe that volume casually — Let's Encrypt rate-limits reissuance.
+- **Certificates**: stored in the proxy's `edge_caddy-data` volume, shared by
+  every app. Don't wipe it casually — Let's Encrypt rate-limits reissuance.
+- **502s**: mean Caddy is up but the upstream isn't. Check the app's stack is
+  running and actually on `edge`: `docker network inspect edge`.
 - **Ollama**: if you run it on the Contabo host, keep `HOST=http://host.docker.internal:11434`.
   If you're on a small VPS, `LLM_PROVIDER=openai` is the cheaper option.
 
