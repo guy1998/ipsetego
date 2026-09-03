@@ -19,6 +19,13 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 __dirname = path.resolve();
 
+// In production there is exactly one proxy hop in front of this app (Caddy),
+// which sets X-Forwarded-For. Without this, req.ip is Caddy's container IP for
+// every request, so express-rate-limit puts the whole internet in one bucket —
+// ten registrations per hour, globally. `1` rather than `true`: trusting the
+// entire chain would let a client spoof its own address via the header.
+app.set('trust proxy', 1);
+
 app.use(
   cors({
     origin: (origin, callback) => {
