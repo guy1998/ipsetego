@@ -17,6 +17,7 @@ services:
       - "5432:5432"
 
   backend:
+    image: ghcr.io/${GHCR_OWNER:-guy1998}/ipsetego-backend:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile
@@ -38,6 +39,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   client:
+    image: ghcr.io/${GHCR_OWNER:-guy1998}/ipsetego-client:${IMAGE_TAG:-latest}
     build:
       context: ./client
       dockerfile: Dockerfile
@@ -50,6 +52,7 @@ services:
       - backend
 
   admin-client:
+    image: ghcr.io/${GHCR_OWNER:-guy1998}/ipsetego-admin-client:${IMAGE_TAG:-latest}
     build:
       context: ./admin-client
       dockerfile: Dockerfile

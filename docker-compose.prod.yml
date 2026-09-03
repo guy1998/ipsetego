@@ -1,0 +1,83 @@
+# Production stack — pulls the images built by .github/workflows/docker-publish.yml
+# and puts Caddy in front of them for automatic HTTPS (Let's Encrypt).
+#
+#   docker compose -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Nothing but Caddy publishes a port: the database, the API and both frontends
+# are reachable only on the internal compose network.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASS:?DATABASE_PASS must be set in .env}
+      POSTGRES_DB: ${DATABASE:-ipsetego}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: ghcr.io/${GHCR_OWNER:-guy1998}/ipsetego-backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "${PORT:-1989}"
+    extra_hosts:
+      # Lets the container reach an Ollama server running on the host.
+      - "host.docker.internal:host-gateway"
+
+  client:
+    image: ghcr.io/${GHCR_OWNER:-guy1998}/ipsetego-client:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - backend
+
+  admin-client:
+    image: ghcr.io/${GHCR_OWNER:-guy1998}/ipsetego-admin-client:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - backend
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-ipsetego.com}
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN:-app.ipsetego.com}
+      API_DOMAIN: ${API_DOMAIN:-api.ipsetego.com}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@ipsetego.com}
+      BACKEND_PORT: ${PORT:-1989}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - client
+      - admin-client
+      - backend
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:

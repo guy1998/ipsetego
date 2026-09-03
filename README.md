@@ -64,6 +64,173 @@ docker compose down          # stop, keep the database volume
 docker compose down -v       # stop and wipe the database volume
 ```
 
+## Published images (GitHub Actions → GHCR)
+
+`.github/workflows/docker-publish.yml` builds and pushes three images to the
+GitHub Container Registry on every push to `main` (and on `v*` tags):
+
+| Image | Built from |
+|---|---|
+| `ghcr.io/guy1998/ipsetego-backend` | `./Dockerfile` |
+| `ghcr.io/guy1998/ipsetego-client` | `./client/Dockerfile` |
+| `ghcr.io/guy1998/ipsetego-admin-client` | `./admin-client/Dockerfile` |
+
+Tags: `latest` (default branch), `sha-<short>` for every commit, and `1.2.3` /
+`1.2` for `v*` git tags. No secrets to configure — the workflow authenticates
+with the built-in `GITHUB_TOKEN`.
+
+The two frontends inline `VITE_BACKEND_URL` at **build** time, so the workflow
+bakes in `https://api.ipsetego.com`. To point the published images at a
+different API, add a repository variable named `VITE_BACKEND_URL`
+(Settings → Secrets and variables → Actions → Variables) and re-run the workflow.
+
+## Deploying to a server with HTTPS
+
+`docker-compose.prod.yml` runs the published images behind
+[Caddy](https://caddyserver.com), which obtains and renews Let's Encrypt
+certificates automatically and redirects HTTP to HTTPS. Only Caddy publishes
+ports; Postgres, the API and both frontends stay on the internal network.
+
+| Domain | Serves |
+|---|---|
+| `ipsetego.com` (+ `www` → apex redirect) | `client` |
+| `app.ipsetego.com` | `admin-client` |
+| `api.ipsetego.com` | `backend` |
+
+The API needs its own hostname because auth cookies are issued with
+`Secure; SameSite=None` — both frontends can talk to it cross-origin, but
+everything must be HTTPS.
+
+### 1. DNS (IONOS)
+
+In the IONOS control panel: **Domains & SSL → ipsetego.com → DNS**. Delete any
+parking/forwarding records IONOS created, then add A records pointing at your
+Contabo server's IPv4:
+
+| Type | Host | Value |
+|---|---|---|
+| A | `@` | `<contabo-ipv4>` |
+| A | `www` | `<contabo-ipv4>` |
+| A | `app` | `<contabo-ipv4>` |
+| A | `api` | `<contabo-ipv4>` |
+
+Add matching `AAAA` records if your server has IPv6. If a `CAA` record exists,
+make sure it allows `letsencrypt.org`, or delete it. Wait until
+`dig +short ipsetego.com` returns your server IP **before** starting the stack —
+Caddy fails the certificate challenge otherwise.
+
+### 2. Prepare the Contabo server
+
+```bash
+ssh root@<contabo-ipv4>
+
+# Docker
+curl -fsSL https://get.docker.com | sh
+
+# Firewall — 80/443 must be open for Let's Encrypt and for the app
+ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw enable
+```
+
+Contabo also has a firewall in its own customer panel on some plans — if yours
+does, open 80 and 443 there too.
+
+### 3. Fetch the deployment files
+
+```bash
+mkdir -p /opt/ipsetego && cd /opt/ipsetego
+git clone https://github.com/guy1998/ipsetego.git .
+```
+
+(Only `docker-compose.prod.yml`, `Caddyfile` and `.env` are actually needed —
+nothing is built on the server.)
+
+### 4. Configure `.env`
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Set the production values:
+
+```ini
+NODE_ENV=production
+ALLOWED_ORIGINS=https://ipsetego.com,https://www.ipsetego.com,https://app.ipsetego.com
+FRONTEND_URL=https://ipsetego.com
+BACKEND_URL=https://api.ipsetego.com
+
+DATABASE_PASS=<a long random password>
+JWT_KEY=<64 random hex chars>
+ENCRYPTION_KEY=<exactly 64 hex chars>
+
+APP_DOMAIN=ipsetego.com
+ADMIN_DOMAIN=app.ipsetego.com
+API_DOMAIN=api.ipsetego.com
+ACME_EMAIL=<your email, for Let's Encrypt expiry notices>
+GHCR_OWNER=guy1998
+IMAGE_TAG=latest
+```
+
+Generate the secrets with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# or, without node: openssl rand -hex 32
+```
+
+Then `chmod 600 .env`.
+
+### 5. Start it
+
+If the GHCR packages are private, log in first — otherwise skip this:
+
+```bash
+echo <github-PAT-with-read:packages> | docker login ghcr.io -u guy1998 --password-stdin
+```
+
+To avoid needing a token at all, make the three packages public once:
+GitHub → your profile → Packages → each `ipsetego-*` package → Package settings →
+Change visibility → Public.
+
+```bash
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml logs -f caddy   # watch certificates being issued
+```
+
+Migrations run automatically when the `backend` container starts.
+
+Verify:
+
+```bash
+curl -I https://ipsetego.com
+curl -I https://app.ipsetego.com
+curl -I https://api.ipsetego.com/auth/signup-status
+```
+
+### 6. Updating after a push to `main`
+
+Wait for the workflow to finish, then on the server:
+
+```bash
+cd /opt/ipsetego
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+docker image prune -f
+```
+
+Pin a specific build instead of tracking `latest` by setting
+`IMAGE_TAG=sha-abc1234` (or a release tag like `1.2.0`) in `.env`.
+
+### Notes
+
+- **Backups**: the database lives in the `db-data` volume. Dump it with
+  `docker compose -f docker-compose.prod.yml exec db pg_dump -U postgres ipsetego > backup.sql`.
+- **Certificates**: stored in the `caddy-data` volume, so they survive restarts.
+  Don't wipe that volume casually — Let's Encrypt rate-limits reissuance.
+- **Ollama**: if you run it on the Contabo host, keep `HOST=http://host.docker.internal:11434`.
+  If you're on a small VPS, `LLM_PROVIDER=openai` is the cheaper option.
+
 ## Running without Docker
 
 ### Prerequisites
